@@ -1,0 +1,456 @@
+@@exam k23
+@@title 14.12.2023: Notenverteilung als Tortendiagramm
+@@intro
+<p><b>Schwerpunkte:</b> Eigene Komponente, Textfelder, Fehlerdialog, KeyAdapter, Events, paintComponent</p><p>Eine Anwendung, die eine Notenverteilung als Tortendiagramm zeigt. Unten fünf Textfelder (Anzahl der Noten 1 bis 5), oben das Diagramm <code>JDiagram</code>, das gegeben ist (mit <code>getPadding</code>, <code>getCenter</code>, <code>getCrossPoint</code>, <code>getLabelPosition</code>).</p>
+@@starter Launcher.java
+// Klasse Launcher mit main
+@@starter View.java
+// Klasse View (Rahmenfenster)
+@@starter Controller.java
+// Klasse Controller
+@@starter Model.java
+// Klasse Model
+@@starter JDiagram.java
+public class JDiagram {
+    private static int BASE_PADDING = 10;
+    private static double PERCENTAGE_RADIUS = 0.5;
+
+    private Point getPadding() {
+        int width = getWidth();
+        int height = getHeight();
+
+        if (width > height) {
+            return new Point((width - height) / 2 + JDiagram.BASE_PADDING, JDiagram.BASE_PADDING);
+        } else if (width < height) {
+            return new Point(JDiagram.BASE_PADDING, (height - width) / 2 + JDiagram.BASE_PADDING);
+        }
+
+        return new Point(JDiagram.BASE_PADDING, JDiagram.BASE_PADDING);
+    }
+
+    private Point getCenter() {
+        return new Point(getX() + getWidth()/2, getY() + getHeight()/2);
+    }
+
+    private Point getCrossPoint(double percentage, double percentageRadius) {
+        Point padding = getPadding();
+        double r = percentageRadius * (getWidth() - 2 * padding.x) / 2d;
+        Point c = getCenter();
+        double phi = percentage * 2 * Math.PI;
+        int x = (int) Math.round(r * Math.cos(phi - Math.PI / 2) + c.x);
+        int y = (int) Math.round(r * Math.sin(phi - Math.PI / 2) + c.y);
+
+        return new Point(x, y);
+    }
+
+    private Point getCrossPoint(double percentage) {
+        return getCrossPoint(percentage, 1.0);
+    }
+
+    private Point getLabelPosition(double percentage) {
+        return getCrossPoint(percentage, JDiagram.PERCENTAGE_RADIUS);
+    }
+}
+@@solution Launcher.java
+public class Launcher {
+    public static void main(String[] args) {
+        Model model = new Model();
+        View view = new View();
+        Controller controller = new Controller();
+        controller.initialise(model, view);
+        view.initialise(model, controller);
+    }
+}
+@@solution View.java
+import javax.swing.*;
+import java.awt.*;
+public class View extends JFrame {
+    private JDiagram diagram;
+    private JTextField[] fields = new JTextField[5];
+    private Controller controller;
+    public void initialise(Model model, Controller controller) {
+        this.controller = controller;
+        setTitle("Notenverteilung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(600, 600);
+        addComponents();
+        diagram.initialise(model);
+        setVisible(true);
+    }
+    private void addComponents() {
+        diagram = new JDiagram();
+        add(diagram, BorderLayout.CENTER);
+        JPanel bottom = new JPanel(new FlowLayout());
+        for (int i = 0; i < fields.length; i++) {
+            bottom.add(new JLabel((i + 1) + ":"));
+            fields[i] = new JTextField("0", 5);
+            fields[i].addKeyListener(controller);
+            bottom.add(fields[i]);
+        }
+        add(bottom, BorderLayout.SOUTH);
+    }
+    public void showError() {
+        JOptionPane.showMessageDialog(this, "Ungültige Eingabe", "Fehler", JOptionPane.ERROR_MESSAGE);
+    }
+    public JTextField[] getFields() { return fields; }
+}
+@@solution Controller.java
+import javax.swing.*;
+import java.awt.event.*;
+public class Controller extends KeyAdapter {
+    private Model model;
+    private View view;
+    public void initialise(Model model, View view) { this.model = model; this.view = view; }
+    @Override
+    public void keyReleased(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) { return; }
+        JTextField[] fields = view.getFields();
+        int[] grades = new int[fields.length];
+        try {
+            for (int i = 0; i < fields.length; i++) {
+                grades[i] = Integer.parseInt(fields[i].getText().trim());
+            }
+        } catch (NumberFormatException ex) {
+            view.showError();
+            return;
+        }
+        model.setGrades(grades);
+    }
+}
+@@solution Model.java
+import java.beans.*;
+public class Model {
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    private int[] grades = new int[5];
+    public void addPropertyChangeListener(PropertyChangeListener l) { pcs.addPropertyChangeListener(l); }
+    public int[] getGrades() { return grades; }
+    public void setGrades(int[] grades) {
+        int[] old = this.grades;
+        this.grades = grades;
+        pcs.firePropertyChange("grades", old, grades);
+    }
+}
+@@solution JDiagram.java
+import javax.swing.*;
+import java.awt.*;
+import java.beans.*;
+public class JDiagram extends JComponent implements PropertyChangeListener {
+    private static final int BASE_PADDING = 10;
+    private static final double PERCENTAGE_RADIUS = 0.5;
+    private Model model;
+    public void initialise(Model model) { this.model = model; model.addPropertyChangeListener(this); }
+    @Override public void propertyChange(PropertyChangeEvent evt) { repaint(); }
+    private Point getPadding() {
+        int width = getWidth();
+        int height = getHeight();
+
+        if (width > height) {
+            return new Point((width - height) / 2 + JDiagram.BASE_PADDING, JDiagram.BASE_PADDING);
+        } else if (width < height) {
+            return new Point(JDiagram.BASE_PADDING, (height - width) / 2 + JDiagram.BASE_PADDING);
+        }
+
+        return new Point(JDiagram.BASE_PADDING, JDiagram.BASE_PADDING);
+    }
+
+    private Point getCenter() {
+        return new Point(getX() + getWidth()/2, getY() + getHeight()/2);
+    }
+
+    private Point getCrossPoint(double percentage, double percentageRadius) {
+        Point padding = getPadding();
+        double r = percentageRadius * (getWidth() - 2 * padding.x) / 2d;
+        Point c = getCenter();
+        double phi = percentage * 2 * Math.PI;
+        int x = (int) Math.round(r * Math.cos(phi - Math.PI / 2) + c.x);
+        int y = (int) Math.round(r * Math.sin(phi - Math.PI / 2) + c.y);
+
+        return new Point(x, y);
+    }
+
+    private Point getCrossPoint(double percentage) {
+        return getCrossPoint(percentage, 1.0);
+    }
+
+    private Point getLabelPosition(double percentage) {
+        return getCrossPoint(percentage, JDiagram.PERCENTAGE_RADIUS);
+    }
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        int[] grades = model.getGrades();
+        int total = 0, nonZero = 0;
+        for (int c : grades) { total += c; if (c > 0) nonZero++; }
+        if (total == 0) return;
+        Point p = getPadding();
+        g.drawOval(p.x, p.y, getWidth() - 2 * p.x, getHeight() - 2 * p.y);
+        double sum = 0;
+        for (int i = 0; i < grades.length; i++) {
+            if (grades[i] == 0) continue;
+            double share = grades[i] / (double) total;
+            if (nonZero > 1) {
+                Point c = getCenter();
+                Point q = getCrossPoint(sum);
+                g.drawLine(c.x, c.y, q.x, q.y);
+            }
+            Point l = getLabelPosition(sum + share / 2);
+            g.drawString(String.valueOf(i + 1), l.x, l.y);
+            sum += share;
+        }
+    }
+}
+@@step 20
+@@title JDiagram als Komponente und View
+@@text
+Erweitere <code>JDiagram</code> so, dass es eine Swing-Komponente ist. Erstelle <code>View</code> als Rahmenfenster, Titel „Notenverteilung“, 600 x 600 px, sichtbar, Anwendung endet beim Schließen. Das Diagramm kommt in den mittleren Bereich, unten ein Panel mit fünf Textfeldern (je eine Beschriftung „1:“ bis „5:“).
+@@check JDiagram extends JComponent/JPanel
+class\s+JDiagram\s+extends\s+(JComponent|JPanel)
+@@check View extends JFrame
+extends\s+JFrame
+@@check setTitle("Notenverteilung")
+setTitle\s*\(\s*"Notenverteilung"\s*\)
+@@check setSize(600, 600)
+setSize\s*\(\s*600\s*,\s*600\s*\)
+@@check EXIT_ON_CLOSE
+EXIT_ON_CLOSE
+@@check setVisible(true)
+setVisible\s*\(\s*true\s*\)
+@@check new JDiagram()
+new\s+JDiagram\s*\(
+@@check BorderLayout.CENTER
+BorderLayout\.CENTER
+@@check BorderLayout.SOUTH
+BorderLayout\.SOUTH
+@@check new JTextField
+new\s+JTextField
+@@hint
+public class JDiagram extends JComponent { /* Rest wie gegeben */ }
+
+public class View extends JFrame {
+    private JDiagram diagram;
+    private JTextField[] fields = new JTextField[5];
+
+    public void initialise() {
+        setTitle("Notenverteilung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(600, 600);
+        addComponents();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        diagram = new JDiagram();
+        add(diagram, BorderLayout.CENTER);
+
+        JPanel bottom = new JPanel(new FlowLayout());
+        for (int i = 0; i < fields.length; i++) {
+            bottom.add(new JLabel((i + 1) + ":"));
+            fields[i] = new JTextField();
+            bottom.add(fields[i]);
+        }
+        add(bottom, BorderLayout.SOUTH);
+    }
+}
+@@step 2
+@@title MVC-Klassen und Launcher
+@@text
+Lege <code>Model</code> und <code>Controller</code> als eigene Klassen an. <code>Launcher</code> mit <code>main</code> instanziiert jeden Akteur. Nach dem Start ist das Fenster ohne Diagramm sichtbar.
+@@check class Model
+class\s+Model\b
+@@check class Controller
+class\s+Controller\b
+@@check class Launcher
+class\s+Launcher\b
+@@check main
+static\s+void\s+main\s*\(
+@@check new Model()
+new\s+Model\s*\(
+@@check new View()
+new\s+View\s*\(
+@@check new Controller()
+new\s+Controller\s*\(
+@@hint
+public class Model { }
+public class Controller { }
+
+public class Launcher {
+    public static void main(String[] args) {
+        Model model = new Model();
+        View view = new View();
+        Controller controller = new Controller();
+        view.initialise();
+    }
+}
+@@step 6
+@@title Textfelder und Fehlerdialog
+@@text
+Alle Textfelder: Spaltenanzahl 5, Standardtext „0“. In der View eine öffentliche Methode, die einen Fehlerdialog mit dem Text „Ungültige Eingabe“ zeigt.
+@@check new JTextField("0", 5) oder setColumns/setText
+new\s+JTextField\s*\(\s*"0"\s*,\s*5\s*\)|new\s+JTextField\s*\(\s*5\s*\)[\s\S]*setText\s*\(\s*"0"|setColumns\s*\(\s*5\s*\)[\s\S]*setText\s*\(\s*"0"|setText\s*\(\s*"0"\s*\)[\s\S]*setColumns\s*\(\s*5\s*\)
+@@check public void showError()
+(?i)public\s+void\s+\w*(Error|Fehler)\w*\s*\(\s*\)
+@@check JOptionPane.showMessageDialog
+JOptionPane\.showMessageDialog
+@@check "Ungültige Eingabe"
+"Ungültige Eingabe"
+@@hint
+fields[i] = new JTextField("0", 5);      // oder setColumns(5) + setText("0")
+
+public void showError() {
+    JOptionPane.showMessageDialog(this, "Ungültige Eingabe", "Fehler", JOptionPane.ERROR_MESSAGE);
+}
+
+public JTextField[] getFields() { return fields; }
+@@step 20
+@@title Controller: Tastatur und Validierung
+@@text
+Reagiere mit einer geeigneten Klasse auf Eingaben in den Textfeldern. Ist es die Enter-Taste, passiert nichts. Sonst alle fünf Textwerte lesen und in <code>int</code> umwandeln. Bei Fehler: Fehlerdialog der View. Sonst die Werte als Array im Model ablegen (<code>setGrades</code>). Registriere den Handler an den Textfeldern.
+@@check extends KeyAdapter oder implements KeyListener
+extends\s+KeyAdapter|implements[^{]*KeyListener
+@@check keyReleased / keyPressed
+void\s+key(Released|Pressed|Typed)\s*\(\s*KeyEvent
+@@check VK_ENTER
+VK_ENTER
+@@check Integer.parseInt
+Integer\.parseInt\s*\(
+@@check catch NumberFormatException
+catch\s*\(\s*NumberFormatException
+@@check view.showError()
+(?i)view\.\w*(Error|Fehler)\w*\s*\(
+@@check model.setGrades(…)
+model\.set\w+\s*\(
+@@check addKeyListener(…)
+\.addKeyListener\s*\(
+@@hint
+public class Controller extends KeyAdapter {
+    private Model model;
+    private View view;
+
+    public void initialise(Model model, View view) {
+        this.model = model;
+        this.view = view;
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+            return;
+        }
+        JTextField[] fields = view.getFields();
+        int[] grades = new int[fields.length];
+        try {
+            for (int i = 0; i < fields.length; i++) {
+                grades[i] = Integer.parseInt(fields[i].getText().trim());
+            }
+        } catch (NumberFormatException ex) {
+            view.showError();
+            return;
+        }
+        model.setGrades(grades);
+    }
+}
+
+// in View.addComponents(), für jedes Feld:
+fields[i].addKeyListener(controller);
+@@step 14
+@@title Model und Neuzeichnen per Event
+@@text
+Das Model hält die Noten in einem <code>int[]</code>. Wird das Array über eine Methode überschrieben, soll <code>JDiagram</code> neu gezeichnet werden. Umsetzung auf Basis von Events: PropertyChangeSupport im Model, JDiagram als PropertyChangeListener. Stelle die nötigen Verknüpfungen her.
+@@check new PropertyChangeSupport(this)
+new\s+PropertyChangeSupport\s*\(\s*this\s*\)
+@@check int[] grades Attribut
+int\s*\[\s*\]\s+\w+
+@@check addPropertyChangeListener im Model
+void\s+addPropertyChangeListener\s*\(\s*PropertyChangeListener
+@@check firePropertyChange
+firePropertyChange\s*\(
+@@check JDiagram implements PropertyChangeListener
+class\s+JDiagram[^{]*implements[^{]*PropertyChangeListener
+@@check propertyChange(...)
+void\s+propertyChange\s*\(\s*PropertyChangeEvent
+@@check repaint()
+repaint\s*\(\s*\)
+@@check model.addPropertyChangeListener(this)
+\.addPropertyChangeListener\s*\(\s*this\s*\)
+@@hint
+public class Model {
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    private int[] grades = new int[5];
+
+    public void addPropertyChangeListener(PropertyChangeListener l) {
+        pcs.addPropertyChangeListener(l);
+    }
+    public int[] getGrades() { return grades; }
+    public void setGrades(int[] grades) {
+        int[] old = this.grades;
+        this.grades = grades;
+        pcs.firePropertyChange("grades", old, grades);
+    }
+}
+
+public class JDiagram extends JComponent implements PropertyChangeListener {
+    private Model model;
+
+    public void initialise(Model model) {
+        this.model = model;
+        model.addPropertyChangeListener(this);
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        repaint();
+    }
+}
+// View.initialise(Model model, ...) ruft diagram.initialise(model) auf
+@@step 18
+@@title Zeichnen: Kreis, Stücke, Labels
+@@text
+Implementiere in <code>JDiagram</code> das Zeichnen: der Kreis unter Beachtung der Randabstände (<code>getPadding</code>); iterativ die Trennlinien für alle Noten mit Anteil &gt; 0 (aufsummierter Prozentwert, <code>getCrossPoint</code>); das Label in der Mitte jedes Stücks (<code>getLabelPosition(summe + anteil / 2)</code>). Bei nur einer werthaltigen Note nur das Label.
+@@check paintComponent
+void\s+paintComponent\s*\(\s*Graphics
+@@check super.paintComponent(g)
+super\.paintComponent\s*\(\s*g\s*\)
+@@check getPadding()
+getPadding\s*\(\s*\)
+@@check drawOval
+drawOval\s*\(
+@@check (double)-Cast
+\(\s*double\s*\)
+@@check getCrossPoint(…)
+getCrossPoint\s*\(
+@@check drawLine
+drawLine\s*\(
+@@check getLabelPosition(… / 2)
+getLabelPosition\s*\([^;]*\/\s*2
+@@check drawString
+drawString\s*\(
+@@check aufsummieren
+\+=\s*\w+
+@@check Note 0 überspringen
+==\s*0|>\s*0|!=\s*0
+@@hint
+@Override
+protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+    int[] grades = model.getGrades();
+    int total = 0, nonZero = 0;
+    for (int c : grades) { total += c; if (c > 0) nonZero++; }
+    if (total == 0) return;
+
+    Point p = getPadding();
+    g.drawOval(p.x, p.y, getWidth() - 2 * p.x, getHeight() - 2 * p.y);
+
+    double sum = 0;
+    for (int i = 0; i < grades.length; i++) {
+        if (grades[i] == 0) continue;
+        double share = grades[i] / (double) total;
+        if (nonZero > 1) {
+            Point c = getCenter();
+            Point q = getCrossPoint(sum);
+            g.drawLine(c.x, c.y, q.x, q.y);
+        }
+        Point l = getLabelPosition(sum + share / 2);
+        g.drawString(String.valueOf(i + 1), l.x, l.y);
+        sum += share;
+    }
+}

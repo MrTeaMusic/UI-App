@@ -1,0 +1,620 @@
+@@module m4
+@@title Events und Controller
+@@lesson
+<h1>Events und Controller</h1><p><i>Listener registrieren, Aktionskommandos auswerten, Listener gegen Adapter.</i></p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eef4ff"><b>Ziel:</b> Du schreibst einen Controller, der Buttons per Aktionskommando unterscheidet, und registrierst ihn richtig.</td></tr></table><br><p>Swing arbeitet mit Ereignissen. Ein <b>Steuerelement</b> (Quelle, Event-Producer) meldet etwas, ein <b>Listener</b> (Event-Consumer) reagiert. Der Ablauf besteht immer aus drei Schritten: Listener-Klasse schreiben, Interface implementieren, beim Steuerelement registrieren.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>class</b></font> Controller <font color="#0033b3"><b>implements</b></font> ActionListener {      <font color="#7a7f87"><i>// 1. passendes Interface</i></font>
+    <font color="#0033b3"><b>private</b></font> Model model;
+    <font color="#0033b3"><b>private</b></font> View view;
+
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> initialise(Model model, View view) {
+        <font color="#0033b3"><b>this</b></font>.model = model;
+        <font color="#0033b3"><b>this</b></font>.view = view;
+    }
+
+    <font color="#9c6500">@Override</font>
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> actionPerformed(ActionEvent e) {              <font color="#7a7f87"><i>// 2. die eine Methode des Interfaces</i></font>
+        <font color="#0033b3"><b>switch</b></font> (e.getActionCommand()) {
+            <font color="#0033b3"><b>case</b></font> <font color="#2e7d32">"S"</font>:
+                model.clear();
+                model.addStartTime();
+                <font color="#0033b3"><b>break</b></font>;
+            <font color="#0033b3"><b>case</b></font> <font color="#2e7d32">"P"</font>:
+                model.addPauseTime();
+                <font color="#0033b3"><b>break</b></font>;
+            <font color="#0033b3"><b>case</b></font> <font color="#2e7d32">"E"</font>:
+                model.addEndTime();
+                <font color="#0033b3"><b>break</b></font>;
+        }
+    }
+}
+
+<font color="#7a7f87"><i>// 3. in der View, in addComponents():</i></font>
+btnStart.addActionListener(controller);
+btnPause.addActionListener(controller);
+btnEnd.addActionListener(controller);</pre></td></tr></table><p class="cap">Controller.java (2022)</p><h2>Zwei Mechanismen: Listener und Adapter</h2><table border="1" cellpadding="5" cellspacing="0"><tr><th></th><th>Listener</th><th>Adapter</th></tr><tr><td>Was ist es?</td><td>Interface</td><td>abstrakte Klasse mit leeren Standard-Methoden</td></tr><tr><td>Du musst</td><td><b>alle</b> Methoden implementieren</td><td>nur die gewünschten überschreiben</td></tr><tr><td>Beispiel</td><td><code>ActionListener</code>, <code>KeyListener</code>, <code>WindowListener</code></td><td><code>KeyAdapter</code>, <code>WindowAdapter</code>, <code>MouseAdapter</code></td></tr><tr><td>Vorteil</td><td>kann zusätzlich eine andere Klasse erweitern</td><td>kurz, wenn du nur ein Ereignis brauchst</td></tr></table><br><p>Alle Listener-Interfaces erweitern <code>java.util.EventListener</code>. Ein <code>ActionListener</code> hat nur eine Methode, deshalb gibt es dafür keinen Adapter. Der <code>KeyListener</code> hat drei (<code>keyTyped</code>, <code>keyPressed</code>, <code>keyReleased</code>), also nimmst du <code>KeyAdapter</code>.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>class</b></font> GradeKeyHandler <font color="#0033b3"><b>extends</b></font> KeyAdapter {
+    <font color="#9c6500">@Override</font>
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> keyReleased(KeyEvent e) {
+        <font color="#0033b3"><b>if</b></font> (e.getKeyCode() == KeyEvent.VK_ENTER) {
+            <font color="#0033b3"><b>return</b></font>;                       <font color="#7a7f87"><i>// Enter: nichts tun</i></font>
+        }
+        <font color="#7a7f87"><i>// ... Text auslesen, parsen, Model setzen</i></font>
+    }
+}
+
+textField.addKeyListener(handler);        <font color="#7a7f87"><i>// Registrierung wie bei allen Listenern</i></font></pre></td></tr></table><p class="cap">Adapter (2023)</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#fff3e0"><b>Achtung:</b> Die häufigste Fehlerursache: Listener ist geschrieben, aber nie mit <code>addActionListener</code> registriert. Dann passiert beim Klick einfach nichts. Frage dich nach dem Schreiben jedes Controllers: „Wo steht die Registrierung?“</td></tr></table><br><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eaf7ee"><b>Tipp:</b> Kürzere Alternative: Lambda oder anonyme Klasse direkt am Button, z. B. <code>btn.addActionListener(e -&gt; model.clear());</code>. In den Klausuren verlangt die Aufgabe aber meist eine eigene Controller-Klasse (MVC!).</td></tr></table><br><h3>Lückentext: Controller-Methode ausfüllen</h3><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>class</b></font> Controller /*<font color="#0033b3"><b>implements</b></font>*/ /*ActionListener*/ {
+    ...
+    <font color="#9c6500">@Override</font>
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> /*actionPerformed*/(/*ActionEvent*/ e) {
+        <font color="#0033b3"><b>switch</b></font> (e./*getActionCommand*/()) {
+            <font color="#0033b3"><b>case</b></font> <font color="#2e7d32">"S"</font>:
+                model.clear();
+                model.addStartTime();
+                /*<font color="#0033b3"><b>break</b></font>*/;
+            <font color="#0033b3"><b>case</b></font> <font color="#2e7d32">"P"</font>:
+                model.addPauseTime();
+                <font color="#0033b3"><b>break</b></font>;
+        }
+    }
+}</pre></td></tr></table><p class="cap">Die Kommentare zeigen die Lösung der Lücken. Tipp: erst abdecken, dann selbst überlegen.</p><p>Schreib den Code selbst, so wie du ihn in IntelliJ tippen würdest (Imports darfst du weglassen). „Prüfen“ lässt den Mini-Compiler laufen und schaut, ob alle geforderten Bausteine vorkommen. Die Musterlösung erst danach ansehen.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eef4ff"><b>Weiter:</b> Zu diesem Kapitel gibt es 5 Code-Aufgaben. Du findest sie links im Baum unter dem Kapitel.</td></tr></table><br>
+@@task m4-1
+@@title Finde die Fehler im Controller
+@@text
+Dieser Code kompiliert nicht. Finde und behebe alle Fehler, bis <b>Kompilieren</b> keine Fehler mehr meldet.<br><br><b>Hinweis:</b> Ein Tippfehler, ein falscher String-Vergleich, ein fehlendes Semikolon.
+@@check Strings mit equals vergleichen
+\.equals\s*\(\s*"S"\s*\)
+@@check kein == bei Strings
+^(?![\s\S]*==\s*")
+@@starter Controller.java
+import java.awt.event.*;
+
+public class Controller implements ActionListener {
+    private Model model = new Model();
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        String cmd = e.getActionCommnd();
+        if (cmd == "S") {
+            model.clear()
+            model.addStartTime();
+        } else if (cmd.equals("P")) {
+            model.addPauseTime();
+        }
+    }
+}
+@@given Model.java
+import javax.swing.table.DefaultTableModel;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Vector;
+import java.util.concurrent.TimeUnit;
+
+public class Model {
+    private static final String[] TABLE_COLUMS = {"Zeitpunkt", "Aktion"};
+    private static final String LABEL_KOMMEN = "KOMMEN";
+    private static final String LABEL_PAUSE_START = "PAUSE START";
+    private static final String LABEL_PAUSE_END = "PAUSE ENDE";
+    private static final String LABEL_END = "GEHEN";
+
+    private final PropertyChangeSupport propertyChangeSupport;
+    private final AZTableModel tableModel;
+
+    private boolean hasStarted = false;
+    private boolean isInPause = false;
+
+    public Model() {
+        propertyChangeSupport = new PropertyChangeSupport(this);
+        tableModel = new AZTableModel(Model.TABLE_COLUMS, 0);
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener propertyChangeListener) {
+        propertyChangeSupport.addPropertyChangeListener(propertyChangeListener);
+    }
+
+    public void addStartTime() {
+        hasStarted = true;
+
+        tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_KOMMEN});
+
+        propertyChangeSupport.firePropertyChange("hasStarted", false, true);
+    }
+
+    public void addPauseTime() {
+        isInPause = !isInPause;
+
+        if (isInPause) {
+            tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_PAUSE_START});
+        } else {
+            tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_PAUSE_END});
+        }
+
+        propertyChangeSupport.firePropertyChange("isInPause", !isInPause, isInPause);
+    }
+
+    public void addEndTime() {
+        hasStarted = false;
+
+        tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_END});
+
+        String strTotalTime = Model.LABEL_END + ", ∑ " + getTotalTime();
+        tableModel.getDataVector().lastElement().set(1, strTotalTime);
+
+        propertyChangeSupport.firePropertyChange("hasStarted", !hasStarted, hasStarted);
+    }
+
+    public void clear() {
+        tableModel.setRowCount(0);
+    }
+
+    public DefaultTableModel getTableModel() {
+        return tableModel;
+    }
+
+    private String getTotalTime() {
+        Vector<Vector> data = tableModel.getDataVector();
+
+        long wholeWorkingTime = Duration
+                .between(
+                    (LocalDateTime)data.firstElement().firstElement(),
+                    (LocalDateTime)data.lastElement().firstElement()
+                ).toMillis();
+
+        int numBreakPoints = data.size() - 2;
+        long wholePauseTime = 0;
+        for (int i = 1; i <= numBreakPoints - 1; i += 2) {
+            wholePauseTime = Duration
+                    .between(
+                            (LocalDateTime) data.elementAt(i).firstElement(),
+                            (LocalDateTime) data.elementAt(i + 1).firstElement()
+                    ).toMillis();
+        }
+
+        long overallWorkTime = wholeWorkingTime - wholePauseTime;
+        return String.format("%dh, %dm",
+                TimeUnit.MILLISECONDS.toHours(overallWorkTime),
+                TimeUnit.MILLISECONDS.toMinutes(overallWorkTime) -
+                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(overallWorkTime)));
+    }
+}
+@@given AZTableModel.java
+import javax.swing.table.DefaultTableModel;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+public class AZTableModel extends DefaultTableModel {
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+
+    public AZTableModel(String[] tableColums, int rowCount) {
+        super(tableColums, rowCount);
+    }
+
+    @Override
+    public Object getValueAt(int row, int column) {
+        if (column == 0) {
+            return formatter.format((LocalDateTime)super.getValueAt(row, column));
+        }
+
+        return super.getValueAt(row, column);
+    }
+}
+@@solution Controller.java
+import java.awt.event.*;
+
+public class Controller implements ActionListener {
+    private Model model = new Model();
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        String cmd = e.getActionCommand();
+        if (cmd.equals("S")) {
+            model.clear();
+            model.addStartTime();
+        } else if (cmd.equals("P")) {
+            model.addPauseTime();
+        }
+    }
+}
+@@task m4-2
+@@title Controller als ActionListener
+@@text
+Schreibe die Klasse <code>Controller</code>, die <code>ActionListener</code> implementiert, Model und View über <code>initialise(Model, View)</code> bekommt und in <code>actionPerformed</code> per Aktionskommando unterscheidet: „S“: <code>model.clear()</code> und dann <code>model.addStartTime()</code>, „P“: <code>model.addPauseTime()</code>, „E“: <code>model.addEndTime()</code>.
+@@check implements ActionListener
+implements\s+ActionListener
+@@check initialise(Model model, View view)
+initiali[sz]e\s*\(\s*Model\s+\w+\s*,\s*View\s+\w+\s*\)
+@@check @Override
+@Override
+@@check public void actionPerformed(ActionEvent e)
+public\s+void\s+actionPerformed\s*\(\s*ActionEvent\s+\w+\s*\)
+@@check getActionCommand()
+getActionCommand\s*\(\s*\)
+@@check "S" → clear() dann addStartTime()
+"S"[\s\S]*clear\s*\(\s*\)\s*;[\s\S]*addStartTime\s*\(\s*\)
+@@check "P" → addPauseTime()
+"P"[\s\S]*addPauseTime\s*\(\s*\)
+@@check "E" → addEndTime()
+"E"[\s\S]*addEndTime\s*\(\s*\)
+@@starter Controller.java
+// Schreibe hier die Klasse Controller.
+@@given Model.java
+import javax.swing.table.DefaultTableModel;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Vector;
+import java.util.concurrent.TimeUnit;
+
+public class Model {
+    private static final String[] TABLE_COLUMS = {"Zeitpunkt", "Aktion"};
+    private static final String LABEL_KOMMEN = "KOMMEN";
+    private static final String LABEL_PAUSE_START = "PAUSE START";
+    private static final String LABEL_PAUSE_END = "PAUSE ENDE";
+    private static final String LABEL_END = "GEHEN";
+
+    private final PropertyChangeSupport propertyChangeSupport;
+    private final AZTableModel tableModel;
+
+    private boolean hasStarted = false;
+    private boolean isInPause = false;
+
+    public Model() {
+        propertyChangeSupport = new PropertyChangeSupport(this);
+        tableModel = new AZTableModel(Model.TABLE_COLUMS, 0);
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener propertyChangeListener) {
+        propertyChangeSupport.addPropertyChangeListener(propertyChangeListener);
+    }
+
+    public void addStartTime() {
+        hasStarted = true;
+
+        tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_KOMMEN});
+
+        propertyChangeSupport.firePropertyChange("hasStarted", false, true);
+    }
+
+    public void addPauseTime() {
+        isInPause = !isInPause;
+
+        if (isInPause) {
+            tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_PAUSE_START});
+        } else {
+            tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_PAUSE_END});
+        }
+
+        propertyChangeSupport.firePropertyChange("isInPause", !isInPause, isInPause);
+    }
+
+    public void addEndTime() {
+        hasStarted = false;
+
+        tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_END});
+
+        String strTotalTime = Model.LABEL_END + ", ∑ " + getTotalTime();
+        tableModel.getDataVector().lastElement().set(1, strTotalTime);
+
+        propertyChangeSupport.firePropertyChange("hasStarted", !hasStarted, hasStarted);
+    }
+
+    public void clear() {
+        tableModel.setRowCount(0);
+    }
+
+    public DefaultTableModel getTableModel() {
+        return tableModel;
+    }
+
+    private String getTotalTime() {
+        Vector<Vector> data = tableModel.getDataVector();
+
+        long wholeWorkingTime = Duration
+                .between(
+                    (LocalDateTime)data.firstElement().firstElement(),
+                    (LocalDateTime)data.lastElement().firstElement()
+                ).toMillis();
+
+        int numBreakPoints = data.size() - 2;
+        long wholePauseTime = 0;
+        for (int i = 1; i <= numBreakPoints - 1; i += 2) {
+            wholePauseTime = Duration
+                    .between(
+                            (LocalDateTime) data.elementAt(i).firstElement(),
+                            (LocalDateTime) data.elementAt(i + 1).firstElement()
+                    ).toMillis();
+        }
+
+        long overallWorkTime = wholeWorkingTime - wholePauseTime;
+        return String.format("%dh, %dm",
+                TimeUnit.MILLISECONDS.toHours(overallWorkTime),
+                TimeUnit.MILLISECONDS.toMinutes(overallWorkTime) -
+                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(overallWorkTime)));
+    }
+}
+@@given AZTableModel.java
+import javax.swing.table.DefaultTableModel;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+public class AZTableModel extends DefaultTableModel {
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+
+    public AZTableModel(String[] tableColums, int rowCount) {
+        super(tableColums, rowCount);
+    }
+
+    @Override
+    public Object getValueAt(int row, int column) {
+        if (column == 0) {
+            return formatter.format((LocalDateTime)super.getValueAt(row, column));
+        }
+
+        return super.getValueAt(row, column);
+    }
+}
+@@given View.java
+import javax.swing.*;
+import java.awt.*;
+public class View extends JFrame {
+    private Model model;
+    private Controller controller;
+    private JButton btnStart, btnPause, btnEnd;
+    public void initialize(Model model, Controller controller) {
+        this.model = model;
+        this.controller = controller;
+        setTitle("Arbeitszeit");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(400, 200);
+        addComponents();
+        setVisible(true);
+    }
+    private void addComponents() {
+        JToolBar toolBar = new JToolBar();
+        btnStart = new JButton("S");
+        btnPause = new JButton("P");
+        btnEnd = new JButton("E");
+        btnPause.setEnabled(false);
+        btnEnd.setEnabled(false);
+        toolBar.add(btnStart);
+        toolBar.add(btnPause);
+        toolBar.add(btnEnd);
+        add(toolBar, BorderLayout.NORTH);
+        JTable table = new JTable(model.getTableModel());
+        add(new JScrollPane(table), BorderLayout.CENTER);
+        btnStart.addActionListener(controller);
+        btnPause.addActionListener(controller);
+        btnEnd.addActionListener(controller);
+    }
+    public JButton getBtnStart() { return btnStart; }
+    public JButton getBtnPause() { return btnPause; }
+    public JButton getBtnEnd() { return btnEnd; }
+}
+@@given Launcher.java
+public class Launcher {
+    public static void main(String[] args) {
+        Model model = new Model();
+        View view = new View();
+        Controller controller = new Controller();
+        controller.initialise(model, view);
+        view.initialize(model, controller);
+    }
+}
+@@solution Controller.java
+public class Controller implements ActionListener {
+    private Model model;
+    private View view;
+
+    public void initialise(Model model, View view) {
+        this.model = model;
+        this.view = view;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        switch (e.getActionCommand()) {
+            case "S":
+                model.clear();
+                model.addStartTime();
+                break;
+            case "P":
+                model.addPauseTime();
+                break;
+            case "E":
+                model.addEndTime();
+                break;
+        }
+    }
+}
+@@task m4-3
+@@title Listener registrieren
+@@text
+In der View: Registriere den gespeicherten <code>controller</code> bei <code>btnStart</code>, <code>btnPause</code> und <code>btnEnd</code>, damit Klicks bei ihm ankommen.
+@@check btnStart.addActionListener(controller)
+btnStart\.addActionListener\s*\(\s*(this\.)?controller\s*\)
+@@check btnPause.addActionListener(controller)
+btnPause\.addActionListener\s*\(\s*(this\.)?controller\s*\)
+@@check btnEnd.addActionListener(controller)
+btnEnd\.addActionListener\s*\(\s*(this\.)?controller\s*\)
+@@starter View.java
+public class View extends JFrame {
+    private JButton btnStart;
+    private JButton btnPause;
+    private JButton btnEnd;
+    private Controller controller = new Controller();
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        JToolBar toolBar = new JToolBar();
+        btnStart = new JButton("S");
+        btnPause = new JButton("P");
+        btnEnd = new JButton("E");
+        toolBar.add(btnStart);
+        toolBar.add(btnPause);
+        toolBar.add(btnEnd);
+        add(toolBar, BorderLayout.NORTH);
+
+        // TODO: Dein Code hier
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@given Controller.java
+import java.awt.event.*;
+
+public class Controller implements ActionListener {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        System.out.println("Klick: " + e.getActionCommand());
+    }
+}
+@@solution View.java
+public class View extends JFrame {
+    private JButton btnStart;
+    private JButton btnPause;
+    private JButton btnEnd;
+    private Controller controller = new Controller();
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        JToolBar toolBar = new JToolBar();
+        btnStart = new JButton("S");
+        btnPause = new JButton("P");
+        btnEnd = new JButton("E");
+        toolBar.add(btnStart);
+        toolBar.add(btnPause);
+        toolBar.add(btnEnd);
+        add(toolBar, BorderLayout.NORTH);
+
+        btnStart.addActionListener(controller);
+        btnPause.addActionListener(controller);
+        btnEnd.addActionListener(controller);
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@task m4-4
+@@title Tastatur mit KeyAdapter
+@@text
+Schreibe eine Klasse <code>InputHandler</code>, die <code>KeyAdapter</code> erweitert. In <code>keyReleased</code>: Ist die Taste Enter, passiert nichts. Sonst wird <code>view.readInput()</code> aufgerufen. Die View bekommt die Klasse über den Konstruktor.
+@@check class InputHandler extends KeyAdapter
+class\s+InputHandler\s+extends\s+KeyAdapter
+@@check Konstruktor InputHandler(View view)
+InputHandler\s*\(\s*View\s+\w+\s*\)
+@@check public void keyReleased(KeyEvent e)
+public\s+void\s+keyReleased\s*\(\s*KeyEvent\s+\w+\s*\)
+@@check getKeyCode() == KeyEvent.VK_ENTER
+getKeyCode\s*\(\s*\)\s*==\s*KeyEvent\.VK_ENTER|KeyEvent\.VK_ENTER\s*==\s*\w+\.getKeyCode\s*\(\s*\)
+@@check return bei Enter
+VK_ENTER[\s\S]*return\s*;
+@@check view.readInput()
+view\.readInput\s*\(\s*\)
+@@starter InputHandler.java
+// Schreibe hier die Klasse InputHandler.
+@@given View.java
+import javax.swing.*;
+
+public class View extends JFrame {
+    public void readInput() {
+        System.out.println("View.readInput()");
+    }
+}
+@@solution InputHandler.java
+public class InputHandler extends KeyAdapter {
+    private View view;
+
+    public InputHandler(View view) {
+        this.view = view;
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+            return;
+        }
+        view.readInput();
+    }
+}
+@@task m4-5
+@@title Kurzer Listener als Lambda
+@@text
+Registriere bei einem Button <code>btnHello</code> einen Listener als <b>Lambda</b>, der „Hallo“ auf der Konsole ausgibt. Schreibe danach dasselbe noch einmal als <b>anonyme Klasse</b>.
+@@check addActionListener(e -> …)
+addActionListener\s*\(\s*\(?\s*\w+\s*\)?\s*->
+@@check new ActionListener() { … }
+new\s+ActionListener\s*\(\s*\)\s*\{
+@@check public void actionPerformed(ActionEvent …)
+public\s+void\s+actionPerformed\s*\(\s*ActionEvent\s+\w+\s*\)
+@@check println("Hallo")
+println\s*\(\s*"Hallo"\s*\)
+@@starter View.java
+public class View extends JFrame {
+    private JButton btnHello;
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        btnHello = new JButton("Hallo sagen");
+        add(btnHello);
+
+        // TODO: Dein Code hier
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@solution View.java
+public class View extends JFrame {
+    private JButton btnHello;
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        btnHello = new JButton("Hallo sagen");
+        add(btnHello);
+
+        btnHello.addActionListener(e -> System.out.println("Hallo"));
+
+        btnHello.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Hallo");
+            }
+        });
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}

@@ -1,0 +1,166 @@
+@@module m1
+@@title Das Fenster: View und Launcher
+@@lesson
+<h1>Das Fenster: View und Launcher</h1><p><i>Das Gerüst, das in jeder Klausur zuerst verlangt wird. Etwa 10 Punkte geschenkt, wenn du es blind schreiben kannst.</i></p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eef4ff"><b>Ziel:</b> Du schreibst View und Launcher aus dem Kopf in unter 5 Minuten.</td></tr></table><br><p>Jede der drei Klausuren beginnt mit derselben Aufgabe: <code>View</code> erweitert ein Rahmenfenster, hat eine Methode <code>initialise()</code> (2022: <code>initialize</code>, genau so schreiben wie in der Aufgabe!), setzt Titel, Schließverhalten und Größe und macht das Fenster sichtbar. Dazu eine <code>Launcher</code>-Klasse mit <code>main</code>.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>import</b></font> javax.swing.*;
+
+<font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>class</b></font> View <font color="#0033b3"><b>extends</b></font> JFrame {                 <font color="#7a7f87"><i>// JFrame = Rahmenfenster</i></font>
+
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> initialise() {
+        setTitle(<font color="#2e7d32">"Unit Converter"</font>);                <font color="#7a7f87"><i>// Fenstertitel</i></font>
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); <font color="#7a7f87"><i>// Programm endet beim Schließen</i></font>
+        setSize(400, 200);                         <font color="#7a7f87"><i>// Breite zuerst, dann Höhe</i></font>
+        <font color="#7a7f87"><i>// oder: pack();                           // Größe aus den Steuerelementen berechnen</i></font>
+        setVisible(<font color="#0033b3"><b>true</b></font>);                          <font color="#7a7f87"><i>// immer ganz zuletzt</i></font>
+    }
+}</pre></td></tr></table><p class="cap">View.java</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>class</b></font> Launcher {
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>static</b></font> <font color="#0033b3"><b>void</b></font> main(String[] args) {
+        View view = <font color="#0033b3"><b>new</b></font> View();
+        view.initialise();
+    }
+}</pre></td></tr></table><p class="cap">Launcher.java</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#fff3e0"><b>Achtung:</b> Reihenfolge: Steuerelemente hinzufügen, dann <code>pack()</code>, dann <code>setVisible(true)</code>. Wer <code>pack()</code> vor dem Hinzufügen der Komponenten aufruft, bekommt ein winziges Fenster.</td></tr></table><br><h2>Was du dir merken musst</h2><table border="1" cellpadding="5" cellspacing="0"><tr><th>Aufgabentext sagt</th><th>Du schreibst</th></tr><tr><td>Basisklasse für Rahmenfenster</td><td><code>extends JFrame</code></td></tr><tr><td>Fenstertitel anpassen</td><td><code>setTitle("...")</code></td></tr><tr><td>Anwendung beim Schließen beenden</td><td><code>setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)</code></td></tr><tr><td>Höhe 200 px, Breite 400 px</td><td><code>setSize(400, 200)</code> (Breite zuerst!)</td></tr><tr><td>Größe nach den Steuerelementen</td><td><code>pack()</code></td></tr><tr><td>Fenster sichtbar</td><td><code>setVisible(true)</code></td></tr><tr><td>Fenster in der Mitte des Bildschirms</td><td><code>setLocationRelativeTo(null)</code></td></tr></table><br><h3>Lückentext: View-Gerüst</h3><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>class</b></font> View /*<font color="#0033b3"><b>extends</b></font>*/ /*JFrame*/ {
+
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> initialise() {
+        /*setTitle*/(<font color="#2e7d32">"Arbeitszeit"</font>);
+        setDefaultCloseOperation(JFrame./*EXIT_ON_CLOSE*/);
+        setSize(/*400*/, /*200*/);
+        setVisible(/*<font color="#0033b3"><b>true</b></font>*/);
+    }
+}</pre></td></tr></table><p class="cap">Die Kommentare zeigen die Lösung der Lücken. Tipp: erst abdecken, dann selbst überlegen.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eaf7ee"><b>Tipp:</b> Die Folien weisen darauf hin, dass Swing-Code eigentlich auf dem Event Dispatch Thread laufen soll: <code>SwingUtilities.invokeLater(() -&gt; { ... });</code>. In den Klausuren wird das nicht verlangt. Wenn du es nutzt, schadet es nicht, aber es kostet Zeit.</td></tr></table><br><p>Schreib den Code selbst, so wie du ihn in IntelliJ tippen würdest (Imports darfst du weglassen). „Prüfen“ lässt den Mini-Compiler laufen und schaut, ob alle geforderten Bausteine vorkommen. Die Musterlösung erst danach ansehen.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eef4ff"><b>Weiter:</b> Zu diesem Kapitel gibt es 4 Code-Aufgaben. Du findest sie links im Baum unter dem Kapitel.</td></tr></table><br>
+@@task m1-1
+@@title Finde die Compiler-Fehler
+@@text
+Dieser Code kompiliert nicht. Finde und behebe alle Fehler, bis <b>Kompilieren</b> keine Fehler mehr meldet.<br><br><b>Hinweis:</b> Drei Stellen: ein fehlendes Semikolon, ein Tippfehler im Methodennamen, eine fehlende Klammer.
+@@starter View.java
+public class View extends JFrame {
+    public void initialise() {
+        setTitle("Arbeitszeit")
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(400, 200);
+        setVisble(true);
+    }
+@@solution View.java
+public class View extends JFrame {
+    public void initialise() {
+        setTitle("Arbeitszeit");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(400, 200);
+        setVisible(true);
+    }
+}
+@@task m1-2
+@@title Fenster nach Vorgabe
+@@text
+Schreibe <code>View</code> als Rahmenfenster mit <code>initialise()</code>: Titel „Notenverteilung“, Programm endet beim Schließen, 600 px breit und 600 px hoch, in der Bildschirmmitte, sichtbar.
+@@check extends JFrame
+extends\s+JFrame
+@@check void initialise()
+void\s+initialise\s*\(\s*\)
+@@check setTitle("Notenverteilung")
+setTitle\s*\(\s*"Notenverteilung"\s*\)
+@@check EXIT_ON_CLOSE
+setDefaultCloseOperation\s*\(\s*(JFrame\.|WindowConstants\.)?EXIT_ON_CLOSE\s*\)
+@@check setSize(600, 600)
+setSize\s*\(\s*600\s*,\s*600\s*\)
+@@check setLocationRelativeTo(null)
+setLocationRelativeTo\s*\(\s*null\s*\)
+@@check setVisible(true) zuletzt
+setVisible\s*\(\s*true\s*\)\s*;\s*\}
+@@starter View.java
+// Schreibe hier die Klasse View.
+@@solution View.java
+public class View extends JFrame {
+    public void initialise() {
+        setTitle("Notenverteilung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(600, 600);
+        setLocationRelativeTo(null);
+        setVisible(true);
+    }
+}
+@@task m1-3
+@@title Model übergeben und speichern
+@@text
+Erweitere die View: <code>initialise</code> nimmt ein <code>Model</code> entgegen und speichert es in einer Instanzvariable. Vor dem Sichtbarmachen ruft sie <code>addComponents()</code> auf und passt die Größe mit <code>pack()</code> an. Lege <code>addComponents()</code> als private, noch leere Methode an.
+@@check private Model model
+private\s+Model\s+\w+\s*;
+@@check initialise(Model model)
+initialise\s*\(\s*Model\s+\w+\s*\)
+@@check this.model = model
+this\.\w+\s*=\s*\w+\s*;
+@@check addComponents() aufrufen
+addComponents\s*\(\s*\)\s*;
+@@check pack() nach addComponents
+addComponents\s*\(\s*\)\s*;[\s\S]*pack\s*\(\s*\)
+@@check setVisible(true)
+setVisible\s*\(\s*true\s*\)
+@@check private void addComponents()
+private\s+void\s+addComponents\s*\(\s*\)
+@@starter View.java
+// Schreibe hier die Klasse View.
+@@given Model.java
+public class Model {
+}
+@@solution View.java
+public class View extends JFrame {
+    private Model model;
+
+    public void initialise(Model model) {
+        this.model = model;
+        setTitle("Unit Converter");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+    }
+}
+@@task m1-4
+@@title Launcher für drei Akteure
+@@text
+Schreibe <code>Launcher</code>: Erzeuge Model, View und Controller. Initialisiere den Controller mit Model und View und danach die View mit Model und Controller.
+@@check static void main
+static\s+void\s+main\s*\(
+@@check new Model()
+new\s+Model\s*\(\s*\)
+@@check new View()
+new\s+View\s*\(\s*\)
+@@check new Controller()
+new\s+Controller\s*\(\s*\)
+@@check controller.initialise(model, view)
+\w+\.initiali[sz]e\s*\(\s*\w+\s*,\s*\w+\s*\)
+@@check view.initialise(model, controller) am Ende
+controller\.initiali[sz]e[\s\S]*view\.initiali[sz]e\s*\(\s*model\s*,\s*controller\s*\)
+@@starter Launcher.java
+// Schreibe hier die Klasse Launcher.
+@@given Model.java
+public class Model {
+}
+@@given View.java
+import javax.swing.*;
+
+public class View extends JFrame {
+    public void initialise(Model model, Controller controller) {
+        setTitle("Drei Akteure");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(300, 150);
+        setVisible(true);
+    }
+}
+@@given Controller.java
+public class Controller {
+    public void initialise(Model model, View view) {
+        System.out.println("Controller kennt jetzt Model und View");
+    }
+}
+@@solution Launcher.java
+public class Launcher {
+    public static void main(String[] args) {
+        Model model = new Model();
+        View view = new View();
+        Controller controller = new Controller();
+        controller.initialise(model, view);
+        view.initialise(model, controller);
+    }
+}

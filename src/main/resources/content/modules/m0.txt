@@ -1,0 +1,387 @@
+@@module m0
+@@title Java-Minimum für Einsteiger
+@@lesson
+<h1>Java-Minimum für Einsteiger</h1><p><i>Klassen, Objekte, Vererbung, Interfaces, Typen und Fehler. Nur das, was die Klausur voraussetzt.</i></p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eef4ff"><b>Ziel:</b> Nach diesem Modul kannst du Java-Code lesen und kleine Klassen selbst schreiben. Alles Weitere baut darauf auf.</td></tr></table><br><h2>Klasse, Objekt, Konstruktor</h2><p>Eine <b>Klasse</b> ist ein Bauplan. Ein <b>Objekt</b> ist ein Ding, das nach diesem Bauplan gebaut wurde. Mit <code>new</code> baust du ein Objekt, dabei läuft der <b>Konstruktor</b>.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>class</b></font> Lamp {
+    <font color="#0033b3"><b>private</b></font> <font color="#0033b3"><b>boolean</b></font> on;            <font color="#7a7f87"><i>// Attribut: der Zustand des Objekts</i></font>
+
+    <font color="#0033b3"><b>public</b></font> Lamp(<font color="#0033b3"><b>boolean</b></font> on) {      <font color="#7a7f87"><i>// Konstruktor: heißt wie die Klasse, kein Rückgabetyp</i></font>
+        <font color="#0033b3"><b>this</b></font>.on = on;              <font color="#7a7f87"><i>// this = dieses Objekt (gegen den gleichnamigen Parameter)</i></font>
+    }
+
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> toggle() {         <font color="#7a7f87"><i>// Methode: das Verhalten</i></font>
+        on = !on;
+    }
+
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>boolean</b></font> isOn() {        <font color="#7a7f87"><i>// Getter: gibt den Zustand nach außen</i></font>
+        <font color="#0033b3"><b>return</b></font> on;
+    }
+}</pre></td></tr></table><p class="cap">Lamp.java</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre>Lamp lamp = <font color="#0033b3"><b>new</b></font> Lamp(<font color="#0033b3"><b>false</b></font>);   <font color="#7a7f87"><i>// Objekt bauen</i></font>
+lamp.toggle();                  <font color="#7a7f87"><i>// Methode aufrufen</i></font>
+System.out.println(lamp.isOn()); <font color="#7a7f87"><i>// true</i></font></pre></td></tr></table><p class="cap">Benutzung</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eaf7ee"><b>Tipp:</b> Die Klausuraufgaben sagen oft „speichern Sie das in einer <b>Instanzvariable</b>“. Das ist ein Attribut der Klasse, normalerweise <code>private</code>, mit Zugriff über Getter.</td></tr></table><br><h3>Lückentext: Vervollständige die Klasse</h3><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>class</b></font> Counter {
+    <font color="#0033b3"><b>private</b></font> <font color="#0033b3"><b>int</b></font> count;
+
+    <font color="#0033b3"><b>public</b></font> Counter(<font color="#0033b3"><b>int</b></font> start) {
+        /*<font color="#0033b3"><b>this</b></font>.count*/ = start;
+    }
+
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> inc() {
+        count/*++*/;
+    }
+
+    <font color="#0033b3"><b>public</b></font> /*<font color="#0033b3"><b>int</b></font>*/ getCount() {
+        <font color="#0033b3"><b>return</b></font> count;
+    }
+}</pre></td></tr></table><p class="cap">Die Kommentare zeigen die Lösung der Lücken. Tipp: erst abdecken, dann selbst überlegen.</p><h2>static, main und der Launcher</h2><p>Normalerweise brauchst du ein Objekt, um eine Methode aufzurufen. <code>static</code> heißt: Die Methode gehört zur <b>Klasse</b>, nicht zu einem Objekt. Genau deshalb kann Java <code>main</code> starten, ohne vorher irgendein Objekt zu haben.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>class</b></font> Launcher {
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>static</b></font> <font color="#0033b3"><b>void</b></font> main(String[] args) {   <font color="#7a7f87"><i>// Einstiegspunkt jedes Java-Programms</i></font>
+        Model model = <font color="#0033b3"><b>new</b></font> Model();
+        View view = <font color="#0033b3"><b>new</b></font> View();
+        view.initialise(model);
+    }
+}</pre></td></tr></table><p class="cap">Launcher.java</p><p><code>args</code> enthält die Programmargumente (in IntelliJ unter „Edit Configurations → Program arguments“). Das brauchst du in der Klausur 2024 für die Sprachauswahl.</p><h2>Vererbung und @Override</h2><p><code>extends</code> heißt: Die neue Klasse hat alles, was die Elternklasse hat, und kann es erweitern oder ersetzen. Ein <code>JFrame</code> zu erweitern ist die wichtigste Anwendung in dieser Klausur.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>class</b></font> A {
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> hello() { System.out.println(<font color="#2e7d32">"Hallo von A"</font>); }
+}
+
+<font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>class</b></font> C <font color="#0033b3"><b>extends</b></font> A {
+    <font color="#9c6500">@Override</font>                       <font color="#7a7f87"><i>// Compiler prüft: gibt es das in der Elternklasse wirklich?</i></font>
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> hello() {
+        <font color="#0033b3"><b>super</b></font>.hello();              <font color="#7a7f87"><i>// Version der Elternklasse aufrufen</i></font>
+        System.out.println(<font color="#2e7d32">"und von C"</font>);
+    }
+}</pre></td></tr></table><h2>Interfaces und anonyme Klassen</h2><p>Ein <b>Interface</b> ist eine Liste von Methoden ohne Rumpf. Wer es <code>implements</code>, muss alle Methoden liefern. So kann das Framework zum Beispiel jeden <code>ActionListener</code> aufrufen, egal wie deine Klasse sonst aussieht.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>interface</b></font> Car { <font color="#0033b3"><b>void</b></font> openWindow(); }
+
+<font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>class</b></font> Porsche <font color="#0033b3"><b>implements</b></font> Car {
+    <font color="#9c6500">@Override</font>
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> openWindow() { /* ... */ }
+}
+
+<font color="#7a7f87"><i>// Anonyme Klasse: Implementierung ohne eigenen Namen, direkt an der Stelle, wo man sie braucht</i></font>
+Car c = <font color="#0033b3"><b>new</b></font> Car() {
+    <font color="#9c6500">@Override</font>
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> openWindow() { System.out.println(<font color="#2e7d32">"auf"</font>); }
+};</pre></td></tr></table><h2>Datentypen, Strings, Arrays, Fehler</h2><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>int</b></font> count = 3;                     <font color="#7a7f87"><i>// ganze Zahl</i></font>
+<font color="#0033b3"><b>double</b></font> share = 0.5;                <font color="#7a7f87"><i>// Kommazahl, Punkt statt Komma</i></font>
+<font color="#0033b3"><b>boolean</b></font> on = <font color="#0033b3"><b>true</b></font>;
+String name = <font color="#2e7d32">"S"</font>;                 <font color="#7a7f87"><i>// Text, immer in doppelten Anführungszeichen</i></font>
+<font color="#0033b3"><b>int</b></font>[] grades = <font color="#0033b3"><b>new</b></font> <font color="#0033b3"><b>int</b></font>[5];         <font color="#7a7f87"><i>// Array mit 5 Plätzen: grades[0] bis grades[4]</i></font>
+System.out.println(grades.length); <font color="#7a7f87"><i>// 5</i></font>
+
+<font color="#0033b3"><b>for</b></font> (<font color="#0033b3"><b>int</b></font> i = 0; i &lt; grades.length; i++) { grades[i] = i + 1; }
+<font color="#0033b3"><b>for</b></font> (<font color="#0033b3"><b>int</b></font> g : grades) { System.out.println(g); }   <font color="#7a7f87"><i>// for-each</i></font>
+
+String cmd = <font color="#2e7d32">"S"</font>;
+<font color="#0033b3"><b>if</b></font> (cmd.equals(<font color="#2e7d32">"S"</font>)) { ... }       <font color="#7a7f87"><i>// Strings IMMER mit equals vergleichen, nie mit ==</i></font>
+
+<font color="#0033b3"><b>int</b></font> a = 1, b = 4;
+<font color="#0033b3"><b>double</b></font> wrong = a / b;              <font color="#7a7f87"><i>// 0.0, denn int geteilt durch int bleibt int</i></font>
+<font color="#0033b3"><b>double</b></font> right = a / (<font color="#0033b3"><b>double</b></font>) b;     <font color="#7a7f87"><i>// 0.25</i></font></pre></td></tr></table><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#fff3e0"><b>Achtung:</b> Die Falle <code>int / int</code> trifft dich beim Tortendiagramm: <code>count / total</code> ergibt fast immer 0. Immer einen Operanden nach <code>double</code> casten.</td></tr></table><br><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>try</b></font> {
+    <font color="#0033b3"><b>int</b></font> v = Integer.parseInt(<font color="#2e7d32">"abc"</font>);       <font color="#7a7f87"><i>// wirft NumberFormatException</i></font>
+} <font color="#0033b3"><b>catch</b></font> (NumberFormatException e) {
+    System.out.println(<font color="#2e7d32">"Ungültig"</font>);        <font color="#7a7f87"><i>// läuft nur im Fehlerfall</i></font>
+}
+
+<font color="#0033b3"><b>switch</b></font> (cmd) {                             <font color="#7a7f87"><i>// switch funktioniert auch mit Strings</i></font>
+    <font color="#0033b3"><b>case</b></font> <font color="#2e7d32">"S"</font>:
+        start();
+        <font color="#0033b3"><b>break</b></font>;                             <font color="#7a7f87"><i>// ohne break läuft es in den nächsten case weiter</i></font>
+    <font color="#0033b3"><b>case</b></font> <font color="#2e7d32">"P"</font>:
+        pause();
+        <font color="#0033b3"><b>break</b></font>;
+}</pre></td></tr></table><h3>Lückentext: Zahl einlesen und Fehler abfangen</h3><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>try</b></font> {
+    <font color="#0033b3"><b>int</b></font> v = Integer./*parseInt*/(text);
+} /*<font color="#0033b3"><b>catch</b></font>*/ (/*NumberFormatException*/ e) {
+    System.out.println(<font color="#2e7d32">"Ungültig"</font>);
+}</pre></td></tr></table><p class="cap">Die Kommentare zeigen die Lösung der Lücken. Tipp: erst abdecken, dann selbst überlegen.</p><h3>Lückentext: Fallunterscheidung über einen String</h3><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre>/*<font color="#0033b3"><b>switch</b></font>*/ (cmd) {
+    /*<font color="#0033b3"><b>case</b></font>*/ <font color="#2e7d32">"S"</font>:
+        start();
+        /*<font color="#0033b3"><b>break</b></font>*/;
+    /*<font color="#0033b3"><b>default</b></font>*/:
+        <font color="#0033b3"><b>break</b></font>;
+}</pre></td></tr></table><p class="cap">Die Kommentare zeigen die Lösung der Lücken. Tipp: erst abdecken, dann selbst überlegen.</p><h2>Generics in einem Satz</h2><p>Wenn du <code>JComboBox&lt;String&gt;</code> oder <code>List&lt;String&gt;</code> siehst: Die Angabe in den spitzen Klammern legt den Typ fest, den der Behälter enthält. Der Compiler prüft das, statt dass es erst zur Laufzeit knallt (so wäre es mit <code>Object</code>). Beim Anlegen reicht <code>new JComboBox&lt;&gt;(...)</code>.</p><p>Schreib den Code selbst, so wie du ihn in IntelliJ tippen würdest (Imports darfst du weglassen). „Prüfen“ lässt den Mini-Compiler laufen und schaut, ob alle geforderten Bausteine vorkommen. Die Musterlösung erst danach ansehen.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eef4ff"><b>Weiter:</b> Zu diesem Kapitel gibt es 7 Code-Aufgaben. Du findest sie links im Baum unter dem Kapitel.</td></tr></table><br>
+@@task m0-1
+@@title Eine Klasse schreiben
+@@text
+Schreibe die Klasse <code>Lamp</code> mit einem privaten Attribut <code>on</code> (boolean), einem Konstruktor, der den Startwert entgegennimmt, einer Methode <code>toggle()</code>, die den Zustand umdreht, und einem Getter <code>isOn()</code>.
+@@check class Lamp
+class\s+Lamp\b
+@@check private boolean on
+private\s+boolean\s+on\s*;
+@@check Konstruktor Lamp(boolean …)
+Lamp\s*\(\s*boolean\s+\w+\s*\)
+@@check this.on = …
+this\.on\s*=
+@@check void toggle()
+void\s+toggle\s*\(\s*\)
+@@check on = !on
+on\s*=\s*!\s*(this\.)?on
+@@check boolean isOn()
+boolean\s+isOn\s*\(\s*\)
+@@check return on
+return\s+(this\.)?on\s*;
+@@starter Lamp.java
+// Schreibe hier die Klasse Lamp.
+@@solution Lamp.java
+public class Lamp {
+    private boolean on;
+
+    public Lamp(boolean on) {
+        this.on = on;
+    }
+
+    public void toggle() {
+        on = !on;
+    }
+
+    public boolean isOn() {
+        return on;
+    }
+}
+@@task m0-2
+@@title Objekt erzeugen und benutzen
+@@text
+Schreibe eine Klasse <code>Launcher</code> mit <code>main</code>. Erzeuge darin eine <code>Lamp</code> mit Startwert <code>false</code>, schalte sie einmal um und gib <code>isOn()</code> auf der Konsole aus.
+@@check class Launcher
+class\s+Launcher\b
+@@check public static void main(String[] args)
+public\s+static\s+void\s+main\s*\(\s*String\s*(\[\s*\]\s*\w+|\w+\s*\[\s*\])\s*\)
+@@check new Lamp(false)
+new\s+Lamp\s*\(\s*false\s*\)
+@@check .toggle()
+\.toggle\s*\(\s*\)
+@@check System.out.println(… isOn())
+System\.out\.println\s*\([^;]*isOn\s*\(\s*\)
+@@starter Launcher.java
+// Schreibe hier die Klasse Launcher.
+@@given Lamp.java
+public class Lamp {
+    private boolean on;
+
+    public Lamp(boolean on) {
+        this.on = on;
+    }
+
+    public void toggle() {
+        on = !on;
+    }
+
+    public boolean isOn() {
+        return on;
+    }
+}
+@@solution Launcher.java
+public class Launcher {
+    public static void main(String[] args) {
+        Lamp lamp = new Lamp(false);
+        lamp.toggle();
+        System.out.println(lamp.isOn());
+    }
+}
+@@task m0-3
+@@title Vererben und überschreiben
+@@text
+Gegeben ist <code>class A</code> mit <code>public void hello()</code>. Schreibe <code>class C</code>, die <code>A</code> erweitert, <code>hello()</code> mit <code>@Override</code> überschreibt, zuerst die Version von A aufruft und danach „und von C“ ausgibt.
+@@check class C extends A
+class\s+C\s+extends\s+A\b
+@@check @Override
+@Override
+@@check public void hello()
+public\s+void\s+hello\s*\(\s*\)
+@@check super.hello()
+super\.hello\s*\(\s*\)
+@@check println("und von C")
+println\s*\(\s*"und von C"\s*\)
+@@starter C.java
+// Schreibe hier die Klasse C.
+@@given A.java
+public class A {
+    public void hello() {
+        System.out.println("Hallo von A");
+    }
+}
+@@given Start.java
+public class Start {
+    public static void main(String[] args) {
+        new C().hello();
+    }
+}
+@@solution C.java
+public class C extends A {
+    @Override
+    public void hello() {
+        super.hello();
+        System.out.println("und von C");
+    }
+}
+@@task m0-4
+@@title Interface implementieren
+@@text
+Gegeben ist <code>interface Car { void openWindow(); }</code>. Schreibe eine Klasse <code>Porsche</code>, die das Interface implementiert und in <code>openWindow</code> „Fenster auf“ ausgibt. Lege danach in einer <code>main</code> zusätzlich eine <b>anonyme Klasse</b> vom Typ <code>Car</code> an und rufe <code>openWindow()</code> auf ihr auf.
+@@check class Porsche implements Car
+class\s+Porsche\s+implements\s+Car\b
+@@check public void openWindow()
+public\s+void\s+openWindow\s*\(\s*\)
+@@check println("Fenster auf")
+println\s*\(\s*"Fenster auf"\s*\)
+@@check new Car() { … }
+new\s+Car\s*\(\s*\)\s*\{
+@@check .openWindow()
+\w+\.openWindow\s*\(\s*\)
+@@starter Porsche.java
+// Schreibe hier die Klasse Porsche.
+@@given Car.java
+public interface Car {
+    void openWindow();
+}
+@@solution Porsche.java
+public class Porsche implements Car {
+    @Override
+    public void openWindow() {
+        System.out.println("Fenster auf");
+    }
+
+    public static void main(String[] args) {
+        Car c = new Car() {
+            @Override
+            public void openWindow() {
+                System.out.println("anonym auf");
+            }
+        };
+        c.openWindow();
+    }
+}
+@@task m0-5
+@@title Schleife und double-Cast
+@@text
+Schreibe eine Methode <code>public static double average(int[] values)</code>, die den Durchschnitt aller Werte zurückgibt. Achte auf die Ganzzahl-Falle bei der Division.
+@@check double average(int[] values)
+double\s+average\s*\(\s*int\s*\[\s*\]\s*\w+\s*\)
+@@check for-Schleife
+for\s*\(
+@@check aufsummieren (+=)
+\+=
+@@check (double)-Cast
+\(\s*double\s*\)
+@@check .length
+\.length
+@@check return
+return\s+
+@@starter Main.java
+public class Main {
+
+    // TODO: Dein Code hier
+
+    public static void main(String[] args) {
+        System.out.println(average(new int[]{1, 2}));   // erwartet: 1.5
+        System.out.println(average(new int[]{3, 4, 5})); // erwartet: 4.0
+    }
+}
+@@solution Main.java
+public class Main {
+
+    public static double average(int[] values) {
+        int sum = 0;
+        for (int v : values) {
+            sum += v;
+        }
+        return sum / (double) values.length;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(average(new int[]{1, 2}));   // erwartet: 1.5
+        System.out.println(average(new int[]{3, 4, 5})); // erwartet: 4.0
+    }
+}
+@@task m0-6
+@@title Text in Zahl umwandeln
+@@text
+Schreibe <code>public static int parseOrZero(String text)</code>: Gib die Zahl im Text zurück. Ist der Text keine Zahl, gib 0 zurück.
+@@check int parseOrZero(String text)
+int\s+parseOrZero\s*\(\s*String\s+\w+\s*\)
+@@check try
+try\s*\{
+@@check Integer.parseInt
+Integer\.parseInt\s*\(
+@@check catch (NumberFormatException …)
+catch\s*\(\s*NumberFormatException\s+\w+\s*\)
+@@check return 0
+return\s+0\s*;
+@@starter Main.java
+public class Main {
+
+    // TODO: Dein Code hier
+
+    public static void main(String[] args) {
+        System.out.println(parseOrZero("42"));   // erwartet: 42
+        System.out.println(parseOrZero(" 7 "));  // erwartet: 7
+        System.out.println(parseOrZero("abc"));  // erwartet: 0
+    }
+}
+@@solution Main.java
+public class Main {
+
+    public static int parseOrZero(String text) {
+        try {
+            return Integer.parseInt(text.trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    public static void main(String[] args) {
+        System.out.println(parseOrZero("42"));   // erwartet: 42
+        System.out.println(parseOrZero(" 7 "));  // erwartet: 7
+        System.out.println(parseOrZero("abc"));  // erwartet: 0
+    }
+}
+@@task m0-7
+@@title switch über einen String
+@@text
+Schreibe <code>public static String label(String cmd)</code>: Für „S“ gib „Start“ zurück, für „P“ „Pause“, für „E“ „Ende“, sonst „?“. Verwende <code>switch</code>.
+@@check String label(String cmd)
+String\s+label\s*\(\s*String\s+\w+\s*\)
+@@check switch (cmd)
+switch\s*\(\s*\w+\s*\)
+@@check case "S"
+case\s+"S"\s*:
+@@check case "P"
+case\s+"P"\s*:
+@@check case "E"
+case\s+"E"\s*:
+@@check default
+default\s*:
+@@check return "Start"
+return\s+"Start"\s*;
+@@starter Main.java
+public class Main {
+
+    // TODO: Dein Code hier
+
+    public static void main(String[] args) {
+        System.out.println(label("S")); // Start
+        System.out.println(label("P")); // Pause
+        System.out.println(label("E")); // Ende
+        System.out.println(label("X")); // ?
+    }
+}
+@@solution Main.java
+public class Main {
+
+    public static String label(String cmd) {
+        switch (cmd) {
+            case "S":
+                return "Start";
+            case "P":
+                return "Pause";
+            case "E":
+                return "Ende";
+            default:
+                return "?";
+        }
+    }
+
+    public static void main(String[] args) {
+        System.out.println(label("S")); // Start
+        System.out.println(label("P")); // Pause
+        System.out.println(label("E")); // Ende
+        System.out.println(label("X")); // ?
+    }
+}
