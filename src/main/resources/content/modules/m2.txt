@@ -1,0 +1,260 @@
+@@module m2
+@@title Layouts
+@@lesson
+<h1>Layouts</h1><p><i>BorderLayout, FlowLayout, GridLayout. 2024 waren das 55 von 100 Punkten.</i></p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eef4ff"><b>Ziel:</b> Du erkennst im Screenshot, welches Layout wo steckt, und schreibst die Konstruktoren samt Abständen richtig.</td></tr></table><br><p>Ein <b>Layout-Manager</b> bestimmt Position und Größe der Kinder eines Containers. Das ist die Alternative zu absoluten Koordinaten und passt sich an Fenstergröße und Plattform an. Jeder Container (<code>JFrame</code>, <code>JPanel</code>) hat genau ein Layout.</p><table border="1" cellpadding="5" cellspacing="0"><tr><th>Layout</th><th>Prinzip</th><th>Konstruktor</th><th>Standard bei</th></tr><tr><td><code>BorderLayout</code></td><td>5 Bereiche: NORTH, SOUTH, EAST, WEST, CENTER. <b>CENTER nimmt allen restlichen Platz.</b></td><td><code>new BorderLayout(hgap, vgap)</code></td><td>Content-Pane von JFrame</td></tr><tr><td><code>FlowLayout</code></td><td>Elemente in einer Reihe, bricht um, wenn der Platz endet. Elemente behalten ihre Wunschgröße.</td><td><code>new FlowLayout(align, hgap, vgap)</code></td><td>JPanel</td></tr><tr><td><code>GridLayout</code></td><td>Raster, alle Zellen gleich groß, zeilenweise gefüllt.</td><td><code>new GridLayout(rows, cols, hgap, vgap)</code></td><td>nirgends</td></tr><tr><td><code>CardLayout</code></td><td>Stapel von Karten, eine sichtbar.</td><td><code>new CardLayout()</code></td><td>nirgends</td></tr><tr><td><code>GridBagLayout</code></td><td>Raster mit Zellengrößen und Spannweiten über <code>GridBagConstraints</code>.</td><td><code>new GridBagLayout()</code></td><td>nirgends</td></tr></table><br><p>Merkhilfe: Panel = Fluss, Fenster = Rand. <code>FlowLayout.CENTER</code>, <code>FlowLayout.LEFT</code>, <code>FlowLayout.RIGHT</code> sind die Ausrichtungen.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre>setLayout(<font color="#0033b3"><b>new</b></font> BorderLayout(10, 10));                  <font color="#7a7f87"><i>// Abstand zwischen den Bereichen: 10 px</i></font>
+
+JPanel top = <font color="#0033b3"><b>new</b></font> JPanel(<font color="#0033b3"><b>new</b></font> FlowLayout(FlowLayout.CENTER, 25, 10));
+JPanel keys = <font color="#0033b3"><b>new</b></font> JPanel(<font color="#0033b3"><b>new</b></font> GridLayout(4, 3, 5, 5));     <font color="#7a7f87"><i>// 4 Zeilen, 3 Spalten, Abstände 5/5</i></font>
+keys.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0)); <font color="#7a7f87"><i>// oben, LINKS, unten, rechts</i></font>
+
+add(top, BorderLayout.NORTH);
+add(keys, BorderLayout.CENTER);</pre></td></tr></table><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eaf7ee"><b>Tipp:</b> „Linksseitige, nicht-gezeichnete Rahmenlinie, 20 px breit“ ist ein <code>EmptyBorder</code> mit der 20 an der zweiten Stelle (Reihenfolge: top, left, bottom, right).</td></tr></table><br><h2>Layout-Labor</h2><p>Probiere aus, was die Parameter bewirken. Ziehe die Breite schmaler und sieh, wie das FlowLayout umbricht, während das GridLayout seine Zellen staucht.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><b>Interaktiv:</b> Zu diesem Thema gibt es in der Web-App eine Spielwiese (layout).</td></tr></table><br><h2>Den Umrechner von 2024 lesen</h2><p>Die Klausur gab einen Screenshot, in dem die Panels farbig umrandet waren, und fragte nach den Layouts. So liest man ihn:</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><b>Interaktiv:</b> Zu diesem Thema gibt es in der Web-App eine Spielwiese (conv).</td></tr></table><br><h3>Lückentext: Rahmenfenster der Umrechner-Aufgabe</h3><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre>setLayout(<font color="#0033b3"><b>new</b></font> /*BorderLayout*/(/*10*/, /*10*/));
+
+JPanel top = <font color="#0033b3"><b>new</b></font> JPanel(<font color="#0033b3"><b>new</b></font> FlowLayout(/*FlowLayout.CENTER*/, 25, 10));
+JPanel keys = <font color="#0033b3"><b>new</b></font> JPanel(<font color="#0033b3"><b>new</b></font> /*GridLayout*/(4, 3, 5, 5));
+keys.setBorder(BorderFactory./*createEmptyBorder*/(0, 20, 0, 0));
+JPanel results = <font color="#0033b3"><b>new</b></font> JPanel(<font color="#0033b3"><b>new</b></font> GridLayout(4, 1));
+JPanel bottom = <font color="#0033b3"><b>new</b></font> JPanel();
+
+add(top, BorderLayout./*NORTH*/);
+add(keys, BorderLayout./*CENTER*/);
+add(results, BorderLayout./*EAST*/);
+add(bottom, BorderLayout./*SOUTH*/);</pre></td></tr></table><p class="cap">Die Kommentare zeigen die Lösung der Lücken. Tipp: erst abdecken, dann selbst überlegen.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eaf7ee"><b>Tipp:</b> Warum <code>EAST</code> für die Ergebnisse und <code>CENTER</code> für die Tasten? Im Screenshot nimmt die Tastenfläche den restlichen Platz, die Ergebnisse hängen rechts mit ihrer Wunschbreite. Genau das ist CENTER gegenüber EAST.</td></tr></table><br><p>Schreib den Code selbst, so wie du ihn in IntelliJ tippen würdest (Imports darfst du weglassen). „Prüfen“ lässt den Mini-Compiler laufen und schaut, ob alle geforderten Bausteine vorkommen. Die Musterlösung erst danach ansehen.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eef4ff"><b>Weiter:</b> Zu diesem Kapitel gibt es 4 Code-Aufgaben. Du findest sie links im Baum unter dem Kapitel.</td></tr></table><br>
+@@task m2-1
+@@title Tastenfeld mit GridLayout
+@@text
+Schreibe Code, der ein <code>JPanel</code> mit <code>GridLayout</code> (4 Zeilen, 3 Spalten, je 5 px Abstand) erzeugt und per Schleife die Tasten 7 8 9 4 5 6 1 2 3 0 . C als <code>JButton</code> hinzufügt. Das Panel kommt in die Mitte des Fensters.
+@@check new GridLayout(4, 3, 5, 5)
+new\s+GridLayout\s*\(\s*4\s*,\s*3\s*,\s*5\s*,\s*5\s*\)
+@@check String-Array mit den Tasten
+"7"\s*,\s*"8"\s*,\s*"9"
+@@check Schleife
+for\s*\(
+@@check new JButton(…)
+new\s+JButton\s*\(\s*\w+\s*\)
+@@check panel.add(…)
+\w+\.add\s*\(\s*(new\s+JButton|\w+)\s*\)?
+@@check BorderLayout.CENTER
+BorderLayout\.CENTER
+@@starter View.java
+public class View extends JFrame {
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        // TODO: Dein Code hier
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@solution View.java
+public class View extends JFrame {
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        JPanel keys = new JPanel(new GridLayout(4, 3, 5, 5));
+        String[] labels = {"7", "8", "9", "4", "5", "6", "1", "2", "3", "0", ".", "C"};
+        for (String label : labels) {
+            keys.add(new JButton(label));
+        }
+        add(keys, BorderLayout.CENTER);
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@task m2-2
+@@title Alle fünf Bereiche
+@@text
+Setze das Layout des Fensters auf <code>BorderLayout</code> mit 10 px Abstand in beide Richtungen und füge in jeden der fünf Bereiche einen Button mit der Beschriftung des Bereichs ein (z. B. „North“).
+@@check setLayout(new BorderLayout(10, 10))
+setLayout\s*\(\s*new\s+BorderLayout\s*\(\s*10\s*,\s*10\s*\)\s*\)
+@@check NORTH
+BorderLayout\.NORTH
+@@check SOUTH
+BorderLayout\.SOUTH
+@@check EAST
+BorderLayout\.EAST
+@@check WEST
+BorderLayout\.WEST
+@@check CENTER
+BorderLayout\.CENTER
+@@starter View.java
+public class View extends JFrame {
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        // TODO: Dein Code hier
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@solution View.java
+public class View extends JFrame {
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        setLayout(new BorderLayout(10, 10));
+        add(new JButton("North"), BorderLayout.NORTH);
+        add(new JButton("South"), BorderLayout.SOUTH);
+        add(new JButton("East"), BorderLayout.EAST);
+        add(new JButton("West"), BorderLayout.WEST);
+        add(new JButton("Center"), BorderLayout.CENTER);
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@task m2-3
+@@title Zeile mit Label und Textfeld
+@@text
+Erzeuge ein Panel mit <code>FlowLayout</code>, linksbündig, 20 px horizontal und 5 px vertikal Abstand. Darin ein <code>JLabel</code> „Name:“ und ein <code>JTextField</code> mit 15 Spalten.
+@@check new FlowLayout(FlowLayout.LEFT, 20, 5)
+new\s+FlowLayout\s*\(\s*FlowLayout\.LEFT\s*,\s*20\s*,\s*5\s*\)
+@@check new JLabel("Name:")
+new\s+JLabel\s*\(\s*"Name:"\s*\)
+@@check new JTextField(15)
+new\s+JTextField\s*\(\s*15\s*\)
+@@check beides ins Panel
+\.add\s*\([\s\S]*\.add\s*\(
+@@starter View.java
+public class View extends JFrame {
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        // TODO: Dein Code hier
+        // Zum Ansehen: add(row);  (falls dein Panel row heißt)
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@solution View.java
+public class View extends JFrame {
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 5));
+        row.add(new JLabel("Name:"));
+        row.add(new JTextField(15));
+        // Zum Ansehen: add(row);  (falls dein Panel row heißt)
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@task m2-4
+@@title Panels mit Abständen und Rand
+@@text
+Nachbau aus 2024: Oben ein Panel mit zentriertem FlowLayout (hgap 25, vgap 10) in NORTH. In der Mitte ein Panel mit GridLayout 4 x 3 (5/5) und links einem nicht gezeichneten Rand von 20 px in CENTER. Rechts ein Panel mit GridLayout 4 x 1 in EAST.
+@@check FlowLayout(FlowLayout.CENTER, 25, 10)
+FlowLayout\s*\(\s*FlowLayout\.CENTER\s*,\s*25\s*,\s*10\s*\)
+@@check GridLayout(4, 3, 5, 5)
+GridLayout\s*\(\s*4\s*,\s*3\s*,\s*5\s*,\s*5\s*\)
+@@check createEmptyBorder(0, 20, 0, 0)
+createEmptyBorder\s*\(\s*0\s*,\s*20\s*,\s*0\s*,\s*0\s*\)
+@@check setBorder(…)
+\.setBorder\s*\(
+@@check GridLayout(4, 1)
+GridLayout\s*\(\s*4\s*,\s*1\s*\)
+@@check NORTH
+BorderLayout\.NORTH
+@@check CENTER
+BorderLayout\.CENTER
+@@check EAST
+BorderLayout\.EAST
+@@starter View.java
+public class View extends JFrame {
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        // TODO: Dein Code hier
+        // Damit man etwas sieht, darfst du in die Panels Buttons legen.
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@solution View.java
+public class View extends JFrame {
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        JPanel top = new JPanel(new FlowLayout(FlowLayout.CENTER, 25, 10));
+        JPanel center = new JPanel(new GridLayout(4, 3, 5, 5));
+        center.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
+        JPanel right = new JPanel(new GridLayout(4, 1));
+        add(top, BorderLayout.NORTH);
+        add(center, BorderLayout.CENTER);
+        add(right, BorderLayout.EAST);
+        // Damit man etwas sieht, darfst du in die Panels Buttons legen.
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}

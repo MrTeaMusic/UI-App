@@ -1,0 +1,406 @@
+@@module m5
+@@title MVC und PropertyChangeSupport
+@@lesson
+<h1>MVC und PropertyChangeSupport</h1><p><i>Wer darf was wissen. Und wie das Model der View und dem Controller Bescheid sagt, ohne sie zu kennen.</i></p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eef4ff"><b>Ziel:</b> Du ordnest Code der richtigen Schicht zu und schreibst ein Model mit PropertyChangeSupport sowie den passenden Listener.</td></tr></table><br><p><b>MVC</b> trennt die Anwendung in drei Rollen. Ziel: UI-Code und Logik entkoppeln, damit man das eine ändern kann, ohne das andere anzufassen.</p><table border="1" cellpadding="5" cellspacing="0"><tr><th>Rolle</th><th>Verantwortung</th><th>In den Klausuren</th></tr><tr><td><b>Model</b></td><td>Daten und Logik, ohne jeden UI-Bezug (Geschäfts-, Validierungs-, Datenzugriffslogik). „Fat model, skinny controller.“</td><td><code>Model</code>: Zeitpunkte, Umrechnung, Noten-Array</td></tr><tr><td><b>View</b></td><td>Erzeugt die Oberfläche, zeigt Daten des Models, entscheidet nicht über Logik.</td><td><code>View extends JFrame</code>, <code>JDiagram</code></td></tr><tr><td><b>Controller</b></td><td>Reagiert auf Benutzeraktionen (Events) und aktualisiert das Model, teils auch die View.</td><td><code>Controller</code> mit <code>actionPerformed</code></td></tr></table><br><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><b>Interaktiv:</b> Zu diesem Thema gibt es in der Web-App eine Spielwiese (mvc).</td></tr></table><br><p>Es gibt zwei Strategien, wie die View erfährt, dass sich das Model geändert hat:</p><ul><li>Das Model meldet die Änderung selbst über <code>PropertyChangeSupport</code>. Wer sich als <code>PropertyChangeListener</code> registriert hat (Controller oder View), wird aufgerufen. So geht es in 2022 und 2023.</li><li>Der Controller ändert das Model und stößt danach selbst die View an, z. B. mit <code>view.repaint()</code>. So geht es in 2024.</li></ul><h2>Das Model: PropertyChangeSupport</h2><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>class</b></font> Model {
+    <font color="#0033b3"><b>private</b></font> <font color="#0033b3"><b>final</b></font> PropertyChangeSupport pcs = <font color="#0033b3"><b>new</b></font> PropertyChangeSupport(<font color="#0033b3"><b>this</b></font>);
+    <font color="#0033b3"><b>private</b></font> <font color="#0033b3"><b>int</b></font>[] grades = <font color="#0033b3"><b>new</b></font> <font color="#0033b3"><b>int</b></font>[5];
+
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> addPropertyChangeListener(PropertyChangeListener l) {
+        pcs.addPropertyChangeListener(l);              <font color="#7a7f87"><i>// Weiterreichen an pcs</i></font>
+    }
+
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>int</b></font>[] getGrades() { <font color="#0033b3"><b>return</b></font> grades; }
+
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> setGrades(<font color="#0033b3"><b>int</b></font>[] grades) {
+        <font color="#0033b3"><b>int</b></font>[] old = <font color="#0033b3"><b>this</b></font>.grades;                       <font color="#7a7f87"><i>// alten Wert merken</i></font>
+        <font color="#0033b3"><b>this</b></font>.grades = grades;                          <font color="#7a7f87"><i>// neuen setzen</i></font>
+        pcs.firePropertyChange(<font color="#2e7d32">"grades"</font>, old, grades); <font color="#7a7f87"><i>// Name, alt, neu</i></font>
+    }
+}</pre></td></tr></table><p class="cap">Model.java</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#fff3e0"><b>Achtung:</b> <code>firePropertyChange</code> feuert <b>nicht</b>, wenn alter und neuer Wert gleich sind (<code>equals</code>). Ein neues Array-Objekt löst immer aus. Wer dasselbe Array verändert und erneut übergibt, löst nichts aus (alt und neu sind dasselbe Objekt). Auch der Name muss stimmen: „isInPause“ ist nicht „inPause“.</td></tr></table><br><h2>Der Controller als Listener des Models</h2><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>class</b></font> Controller <font color="#0033b3"><b>implements</b></font> ActionListener, PropertyChangeListener {
+    <font color="#7a7f87"><i>// ...</i></font>
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> initialise(Model model, View view) {
+        <font color="#0033b3"><b>this</b></font>.model = model;
+        <font color="#0033b3"><b>this</b></font>.view = view;
+        <font color="#0033b3"><b>this</b></font>.model.addPropertyChangeListener(<font color="#0033b3"><b>this</b></font>);    <font color="#7a7f87"><i>// sich selbst registrieren</i></font>
+    }
+
+    <font color="#9c6500">@Override</font>
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> propertyChange(PropertyChangeEvent evt) {
+        String name = evt.getPropertyName();
+        <font color="#0033b3"><b>boolean</b></font> value = (Boolean) evt.getNewValue();   <font color="#7a7f87"><i>// getNewValue() liefert Object -&gt; casten</i></font>
+
+        <font color="#0033b3"><b>if</b></font> (name.equals(<font color="#2e7d32">"isInPause"</font>)) {
+            view.getBtnEnd().setEnabled(!value);       <font color="#7a7f87"><i>// in der Pause darf man nicht gehen</i></font>
+        } <font color="#0033b3"><b>else</b></font> <font color="#0033b3"><b>if</b></font> (name.equals(<font color="#2e7d32">"hasStarted"</font>)) {
+            view.getBtnStart().setEnabled(!value);
+            view.getBtnPause().setEnabled(value);
+            view.getBtnEnd().setEnabled(value);
+        }
+    }
+}</pre></td></tr></table><p class="cap">2022: Buttons umschalten</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>class</b></font> JDiagram <font color="#0033b3"><b>extends</b></font> JComponent <font color="#0033b3"><b>implements</b></font> PropertyChangeListener {
+    <font color="#0033b3"><b>private</b></font> Model model;
+
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> initialise(Model model) {
+        <font color="#0033b3"><b>this</b></font>.model = model;
+        model.addPropertyChangeListener(<font color="#0033b3"><b>this</b></font>);
+    }
+
+    <font color="#9c6500">@Override</font>
+    <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> propertyChange(PropertyChangeEvent evt) {
+        repaint();                                      <font color="#7a7f87"><i>// Model hat sich geändert -&gt; neu zeichnen</i></font>
+    }
+}</pre></td></tr></table><p class="cap">2023: Diagramm zeichnet sich neu</p><h3>Lückentext: Model mit PropertyChangeSupport</h3><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>private</b></font> <font color="#0033b3"><b>final</b></font> /*PropertyChangeSupport*/ pcs = <font color="#0033b3"><b>new</b></font> PropertyChangeSupport(/*<font color="#0033b3"><b>this</b></font>*/);
+
+<font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> addPropertyChangeListener(PropertyChangeListener l) {
+    pcs./*addPropertyChangeListener*/(l);
+}
+
+<font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> setGrades(<font color="#0033b3"><b>int</b></font>[] grades) {
+    <font color="#0033b3"><b>int</b></font>[] old = <font color="#0033b3"><b>this</b></font>.grades;
+    <font color="#0033b3"><b>this</b></font>.grades = grades;
+    pcs./*firePropertyChange*/(<font color="#2e7d32">"grades"</font>, old, grades);
+}</pre></td></tr></table><p class="cap">Die Kommentare zeigen die Lösung der Lücken. Tipp: erst abdecken, dann selbst überlegen.</p><h3>Lückentext: propertyChange im Controller</h3><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> /*propertyChange*/(PropertyChangeEvent evt) {
+    String name = evt./*getPropertyName*/();
+    <font color="#0033b3"><b>boolean</b></font> value = (/*Boolean*/) evt./*getNewValue*/();
+    <font color="#0033b3"><b>if</b></font> (<font color="#2e7d32">"isInPause"</font>.equals(name)) {
+        view.getBtnEnd().setEnabled(!/*value*/);
+    }
+}</pre></td></tr></table><p class="cap">Die Kommentare zeigen die Lösung der Lücken. Tipp: erst abdecken, dann selbst überlegen.</p><p>Schreib den Code selbst, so wie du ihn in IntelliJ tippen würdest (Imports darfst du weglassen). „Prüfen“ lässt den Mini-Compiler laufen und schaut, ob alle geforderten Bausteine vorkommen. Die Musterlösung erst danach ansehen.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eef4ff"><b>Weiter:</b> Zu diesem Kapitel gibt es 4 Code-Aufgaben. Du findest sie links im Baum unter dem Kapitel.</td></tr></table><br>
+@@task m5-1
+@@title Model mit PropertyChangeSupport
+@@text
+Schreibe eine Klasse <code>Counter</code> (Model) mit einem privaten <code>int count</code>, einem <code>PropertyChangeSupport</code>, der Methode <code>addPropertyChangeListener</code> und einem Setter <code>setCount(int)</code>, der die Änderung als Eigenschaft „count“ meldet (alter und neuer Wert).
+@@check class Counter
+class\s+Counter\b
+@@check new PropertyChangeSupport(this)
+new\s+PropertyChangeSupport\s*\(\s*this\s*\)
+@@check private int count
+private\s+int\s+count
+@@check void addPropertyChangeListener(PropertyChangeListener …)
+void\s+addPropertyChangeListener\s*\(\s*PropertyChangeListener\s+\w+\s*\)
+@@check pcs.addPropertyChangeListener(…)
+\w+\.addPropertyChangeListener\s*\(\s*\w+\s*\)
+@@check void setCount(int …)
+void\s+setCount\s*\(\s*int\s+\w+\s*\)
+@@check alten Wert merken
+int\s+old\w*\s*=\s*(this\.)?count
+@@check firePropertyChange("count", old, …)
+firePropertyChange\s*\(\s*"count"\s*,\s*old\w*\s*,
+@@starter Counter.java
+// Schreibe hier die Klasse Counter.
+@@solution Counter.java
+public class Counter {
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    private int count;
+
+    public void addPropertyChangeListener(PropertyChangeListener l) {
+        pcs.addPropertyChangeListener(l);
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public void setCount(int count) {
+        int old = this.count;
+        this.count = count;
+        pcs.firePropertyChange("count", old, count);
+    }
+}
+@@task m5-2
+@@title Auf die Änderung reagieren
+@@text
+Schreibe eine Klasse <code>CounterLabel</code>, die <code>JLabel</code> erweitert und <code>PropertyChangeListener</code> implementiert. Wenn die Eigenschaft „count“ sich ändert, setzt sie ihren Text auf den neuen Wert.
+@@check class CounterLabel extends JLabel implements PropertyChangeListener
+class\s+CounterLabel\s+extends\s+JLabel\s+implements\s+PropertyChangeListener
+@@check public void propertyChange(PropertyChangeEvent …)
+public\s+void\s+propertyChange\s*\(\s*PropertyChangeEvent\s+\w+\s*\)
+@@check getPropertyName()
+getPropertyName\s*\(\s*\)
+@@check "count"
+"count"
+@@check getNewValue()
+getNewValue\s*\(\s*\)
+@@check setText(…)
+setText\s*\(
+@@starter CounterLabel.java
+// Schreibe hier die Klasse CounterLabel.
+@@solution CounterLabel.java
+public class CounterLabel extends JLabel implements PropertyChangeListener {
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if ("count".equals(evt.getPropertyName())) {
+            int value = (Integer) evt.getNewValue();
+            setText(String.valueOf(value));
+        }
+    }
+}
+@@task m5-3
+@@title Buttons nach Model-Zustand schalten
+@@text
+Der Controller implementiert schon <code>PropertyChangeListener</code>. Schreibe <code>initialise(Model, View)</code>, in der er sich beim Model registriert, und <code>propertyChange</code>: Bei „hasStarted“ wird der neue Wert als <code>boolean</code> gelesen. Ist er true: [S] inaktiv, [P] und [E] aktiv. Sonst umgekehrt. Nutze die Getter der View.
+@@check initialise(Model model, View view)
+initiali[sz]e\s*\(\s*Model\s+\w+\s*,\s*View\s+\w+\s*\)
+@@check addPropertyChangeListener(this)
+addPropertyChangeListener\s*\(\s*this\s*\)
+@@check public void propertyChange(PropertyChangeEvent …)
+public\s+void\s+propertyChange\s*\(\s*PropertyChangeEvent\s+\w+\s*\)
+@@check "hasStarted"
+"hasStarted"
+@@check boolean … = (Boolean) …getNewValue()
+boolean\s+\w+\s*=\s*\(\s*(Boolean|boolean)\s*\)\s*\w+\.getNewValue\s*\(\s*\)
+@@check Start-Button umschalten
+getBtnStart\s*\(\s*\)\.setEnabled\s*\(
+@@check Pause-Button umschalten
+getBtnPause\s*\(\s*\)\.setEnabled\s*\(
+@@check End-Button umschalten
+getBtnEnd\s*\(\s*\)\.setEnabled\s*\(
+@@starter Controller.java
+import java.beans.*;
+
+public class Controller implements PropertyChangeListener {
+    private Model model;
+    private View view;
+
+    // TODO: Dein Code hier
+
+    public void actionPerformed(java.awt.event.ActionEvent e) {
+        switch (e.getActionCommand()) {
+            case "S": model.clear(); model.addStartTime(); break;
+            case "P": model.addPauseTime(); break;
+            case "E": model.addEndTime(); break;
+        }
+    }
+}
+@@given Model.java
+import javax.swing.table.DefaultTableModel;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Vector;
+import java.util.concurrent.TimeUnit;
+
+public class Model {
+    private static final String[] TABLE_COLUMS = {"Zeitpunkt", "Aktion"};
+    private static final String LABEL_KOMMEN = "KOMMEN";
+    private static final String LABEL_PAUSE_START = "PAUSE START";
+    private static final String LABEL_PAUSE_END = "PAUSE ENDE";
+    private static final String LABEL_END = "GEHEN";
+
+    private final PropertyChangeSupport propertyChangeSupport;
+    private final AZTableModel tableModel;
+
+    private boolean hasStarted = false;
+    private boolean isInPause = false;
+
+    public Model() {
+        propertyChangeSupport = new PropertyChangeSupport(this);
+        tableModel = new AZTableModel(Model.TABLE_COLUMS, 0);
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener propertyChangeListener) {
+        propertyChangeSupport.addPropertyChangeListener(propertyChangeListener);
+    }
+
+    public void addStartTime() {
+        hasStarted = true;
+
+        tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_KOMMEN});
+
+        propertyChangeSupport.firePropertyChange("hasStarted", false, true);
+    }
+
+    public void addPauseTime() {
+        isInPause = !isInPause;
+
+        if (isInPause) {
+            tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_PAUSE_START});
+        } else {
+            tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_PAUSE_END});
+        }
+
+        propertyChangeSupport.firePropertyChange("isInPause", !isInPause, isInPause);
+    }
+
+    public void addEndTime() {
+        hasStarted = false;
+
+        tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_END});
+
+        String strTotalTime = Model.LABEL_END + ", ∑ " + getTotalTime();
+        tableModel.getDataVector().lastElement().set(1, strTotalTime);
+
+        propertyChangeSupport.firePropertyChange("hasStarted", !hasStarted, hasStarted);
+    }
+
+    public void clear() {
+        tableModel.setRowCount(0);
+    }
+
+    public DefaultTableModel getTableModel() {
+        return tableModel;
+    }
+
+    private String getTotalTime() {
+        Vector<Vector> data = tableModel.getDataVector();
+
+        long wholeWorkingTime = Duration
+                .between(
+                    (LocalDateTime)data.firstElement().firstElement(),
+                    (LocalDateTime)data.lastElement().firstElement()
+                ).toMillis();
+
+        int numBreakPoints = data.size() - 2;
+        long wholePauseTime = 0;
+        for (int i = 1; i <= numBreakPoints - 1; i += 2) {
+            wholePauseTime = Duration
+                    .between(
+                            (LocalDateTime) data.elementAt(i).firstElement(),
+                            (LocalDateTime) data.elementAt(i + 1).firstElement()
+                    ).toMillis();
+        }
+
+        long overallWorkTime = wholeWorkingTime - wholePauseTime;
+        return String.format("%dh, %dm",
+                TimeUnit.MILLISECONDS.toHours(overallWorkTime),
+                TimeUnit.MILLISECONDS.toMinutes(overallWorkTime) -
+                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(overallWorkTime)));
+    }
+}
+@@given AZTableModel.java
+import javax.swing.table.DefaultTableModel;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+public class AZTableModel extends DefaultTableModel {
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+
+    public AZTableModel(String[] tableColums, int rowCount) {
+        super(tableColums, rowCount);
+    }
+
+    @Override
+    public Object getValueAt(int row, int column) {
+        if (column == 0) {
+            return formatter.format((LocalDateTime)super.getValueAt(row, column));
+        }
+
+        return super.getValueAt(row, column);
+    }
+}
+@@given View.java
+import javax.swing.*;
+import java.awt.*;
+public class View extends JFrame {
+    private Model model;
+    private Controller controller;
+    private JButton btnStart, btnPause, btnEnd;
+    public void initialize(Model model, Controller controller) {
+        this.model = model;
+        this.controller = controller;
+        setTitle("Arbeitszeit");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(400, 200);
+        addComponents();
+        setVisible(true);
+    }
+    private void addComponents() {
+        JToolBar toolBar = new JToolBar();
+        btnStart = new JButton("S");
+        btnPause = new JButton("P");
+        btnEnd = new JButton("E");
+        btnPause.setEnabled(false);
+        btnEnd.setEnabled(false);
+        toolBar.add(btnStart);
+        toolBar.add(btnPause);
+        toolBar.add(btnEnd);
+        add(toolBar, BorderLayout.NORTH);
+        JTable table = new JTable(model.getTableModel());
+        add(new JScrollPane(table), BorderLayout.CENTER);
+        btnStart.addActionListener(controller::actionPerformed);
+        btnPause.addActionListener(controller::actionPerformed);
+        btnEnd.addActionListener(controller::actionPerformed);
+    }
+    public JButton getBtnStart() { return btnStart; }
+    public JButton getBtnPause() { return btnPause; }
+    public JButton getBtnEnd() { return btnEnd; }
+}
+@@given Launcher.java
+public class Launcher {
+    public static void main(String[] args) {
+        Model model = new Model();
+        View view = new View();
+        Controller controller = new Controller();
+        controller.initialise(model, view);
+        view.initialize(model, controller);
+    }
+}
+@@solution Controller.java
+import java.beans.*;
+
+public class Controller implements PropertyChangeListener {
+    private Model model;
+    private View view;
+
+    public void initialise(Model model, View view) {
+        this.model = model;
+        this.view = view;
+        model.addPropertyChangeListener(this);
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if (evt.getPropertyName().equals("hasStarted")) {
+            boolean value = (Boolean) evt.getNewValue();
+            view.getBtnStart().setEnabled(!value);
+            view.getBtnPause().setEnabled(value);
+            view.getBtnEnd().setEnabled(value);
+        }
+    }
+
+    public void actionPerformed(java.awt.event.ActionEvent e) {
+        switch (e.getActionCommand()) {
+            case "S": model.clear(); model.addStartTime(); break;
+            case "P": model.addPauseTime(); break;
+            case "E": model.addEndTime(); break;
+        }
+    }
+}
+@@task m5-4
+@@title Noten-Model für 2023
+@@text
+Schreibe das Model für das Tortendiagramm: privates <code>int[] grades</code> (5 Plätze), PropertyChangeSupport mit <code>addPropertyChangeListener</code>, Getter <code>getGrades()</code> und <code>setGrades(int[])</code>, das „grades“ meldet.
+@@check int[] grades = new int[5]
+int\s*\[\s*\]\s+grades\s*=\s*new\s+int\s*\[\s*5\s*\]
+@@check new PropertyChangeSupport(this)
+new\s+PropertyChangeSupport\s*\(\s*this\s*\)
+@@check addPropertyChangeListener(PropertyChangeListener …)
+void\s+addPropertyChangeListener\s*\(\s*PropertyChangeListener\s+\w+\s*\)
+@@check int[] getGrades()
+int\s*\[\s*\]\s+getGrades\s*\(\s*\)
+@@check void setGrades(int[] …)
+void\s+setGrades\s*\(\s*int\s*\[\s*\]\s*\w+\s*\)
+@@check firePropertyChange("grades", …)
+firePropertyChange\s*\(\s*"grades"\s*,
+@@starter Model.java
+// Schreibe hier die Klasse Model.
+@@solution Model.java
+public class Model {
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    private int[] grades = new int[5];
+
+    public void addPropertyChangeListener(PropertyChangeListener l) {
+        pcs.addPropertyChangeListener(l);
+    }
+
+    public int[] getGrades() {
+        return grades;
+    }
+
+    public void setGrades(int[] grades) {
+        int[] old = this.grades;
+        this.grades = grades;
+        pcs.firePropertyChange("grades", old, grades);
+    }
+}

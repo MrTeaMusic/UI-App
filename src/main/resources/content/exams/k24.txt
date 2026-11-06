@@ -1,0 +1,783 @@
+@@exam k24
+@@title 12.12.2024: Längen-Umrechner
+@@intro
+<p><b>Schwerpunkte:</b> Verschachtelte Layouts (55 P), paint, Controller mit StringBuilder-Logik, i18n als Zusatzaufgabe</p><p>Ein Rechner, der Längeneinheiten (m, inch, foot, yard) umrechnet. Oben Eingabefeld und Einheitenauswahl, in der Mitte das Tastenfeld, rechts die Ergebnisse, unten „Calculate“. Gegeben sind <code>Model</code> und <code>Controller</code> (mit <code>isNumberBetweenZeroAndNine</code>). Im Model: <code>initialise(double, String)</code>, <code>calculate(double)</code>, <code>setUnit(String)</code>, <code>getMeter/getInch/getFoot/getYard</code>, <code>getStringBuilder()</code> und statisch <code>format(double)</code>.</p>
+@@starter Launcher.java
+// Klasse Launcher mit main
+@@starter View.java
+// Klasse View (Rahmenfenster)
+@@starter Controller.java
+public class Controller {
+	private Model model;
+
+	public void initialise(Model model) {
+		this.model = model;
+	}
+
+	private static boolean isNumberBetweenZeroAndNine(String str) {
+		try {
+			int i = Integer.valueOf(str);
+			
+			return i >= 0 && i <= 9;
+		} catch (NumberFormatException e) {
+			return false;
+		}
+	}
+}
+@@starter Model.java
+import java.text.DecimalFormat;
+
+public class Model {
+	private double meter;
+	private double inch;
+	private double foot;
+	private double yard;
+	
+	private String unit;
+	private StringBuilder builder;
+
+	public void initialise(double value, String unit) {
+		this.unit = unit;
+		this.builder = new StringBuilder();
+		
+		calculate(value);
+	}
+	
+	public double getMeter() {
+		return meter;
+	}
+
+	public void setMeter(double meter) {
+		this.meter = meter;
+		inch = 1. / 0.0254 * meter;
+		foot = 1. / 0.3048 * meter;
+		yard = 1. / 0.9144 * meter;
+	}
+
+	public double getInch() {
+		return inch;
+	}
+
+	public void setInch(double inch) {
+		this.inch = inch;
+		
+		meter = 0.0254 * inch;
+		foot = 1. / 12. * inch;
+		yard = 1. / 36. * inch;
+	}
+
+	public double getFoot() {
+		return foot;
+	}
+
+	public void setFoot(double foot) {
+		this.foot = foot;
+		meter = 0.3048 * foot;
+		inch = 12 * foot;
+		yard = 1. / 3. * foot;
+	}
+
+	public double getYard() {
+		return yard;
+	}
+
+	public void setYard(double yard) {
+		this.yard = yard;
+		meter = 0.9144 * yard;
+		inch = 36 * yard;
+		foot = 3 * yard;
+	}
+
+	public void setUnit(String unit) {
+		double value = 0;
+		
+		switch (this.unit) {
+			case "m":
+				value = getMeter();
+				break;
+			case "inch":
+				value = getInch();
+				break;				
+			case "foot":
+				value = getFoot();
+				break;
+			case "yard":
+				value = getYard();
+				break;
+		}
+		
+		this.unit = unit;
+		calculate(value);
+	}
+
+	public StringBuilder getStringBuilder() {
+		return builder;
+	}
+
+	public void calculate(double value) {
+		switch (unit) {
+			case "m":
+				setMeter(value);
+				break;
+			case "inch":
+				setInch(value);
+				break;				
+			case "foot":
+				setFoot(value);
+				break;
+			case "yard":
+				setYard(value);
+				break;
+		}
+	}
+	
+	public static String format(double value) {
+		return new DecimalFormat("#.####").format(value);
+	}
+}
+@@starter Messages_en.properties
+# Zusatzaufgabe: englische Texte, z. B. title=Unit Converter
+@@starter Messages_de.properties
+# Zusatzaufgabe: deutsche Texte
+@@starter Notizen.txt
+Aufgabe "Layouts identifizieren": Schreibe deine Antwort hier hinein.
+@@solution Launcher.java
+import java.util.*;
+public class Launcher {
+    public static void main(String[] args) {
+        Locale locale = args.length > 0 ? new Locale(args[0]) : Locale.ENGLISH;
+        ResourceBundle bundle = null;
+        try {
+            bundle = ResourceBundle.getBundle("Messages", locale);
+        } catch (MissingResourceException e) {
+            System.err.println("Sprachdatei nicht gefunden");
+            System.exit(1);
+        }
+        Model model = new Model();
+        model.initialise(0, "m");
+        Controller controller = new Controller();
+        View view = new View();
+        controller.initialise(model, view);
+        view.initialise(model, controller, bundle);
+    }
+}
+@@solution View.java
+import javax.swing.*;
+import java.awt.*;
+import java.util.*;
+public class View extends JFrame {
+    private Model model;
+    private Controller controller;
+    private ResourceBundle bundle;
+    private JTextField inputField, meterField, inchField, footField, yardField;
+    private JComboBox<String> unitBox;
+
+    public void initialise(Model model, Controller controller, ResourceBundle bundle) {
+        this.model = model;
+        this.controller = controller;
+        this.bundle = bundle;
+        setTitle(bundle.getString("title"));
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout(10, 10));
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        JPanel top = new JPanel(new FlowLayout(FlowLayout.CENTER, 25, 10));
+        JPanel center = new JPanel(new GridLayout(4, 3, 5, 5));
+        center.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
+        JPanel right = new JPanel(new GridLayout(4, 1));
+        JPanel bottom = new JPanel(new FlowLayout());
+        add(top, BorderLayout.NORTH);
+        add(center, BorderLayout.CENTER);
+        add(right, BorderLayout.EAST);
+        add(bottom, BorderLayout.SOUTH);
+
+        inputField = new JTextField(20);
+        inputField.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 18));
+        inputField.setHorizontalAlignment(JTextField.RIGHT);
+        unitBox = new JComboBox<>(new String[]{"m", "inch", "foot", "yard"});
+        unitBox.setActionCommand("choose");
+        unitBox.addActionListener(controller);
+        top.add(inputField);
+        top.add(unitBox);
+
+        String[] keys = {"7","8","9","4","5","6","1","2","3","0",".","C"};
+        for (String key : keys) {
+            JButton b = new JButton(key);
+            b.addActionListener(controller);
+            center.add(b);
+        }
+        JButton calc = new JButton(bundle.getString("calculate"));
+        calc.setActionCommand("Calculate"); // Text ist übersetzt, das Kommando bleibt gleich
+        calc.addActionListener(controller);
+        bottom.add(calc);
+
+        meterField = addField(right, "m");
+        inchField  = addField(right, "inch");
+        footField  = addField(right, "foot");
+        yardField  = addField(right, "yard");
+    }
+
+    private JTextField addField(JPanel parent, String label) {
+        JLabel lbl = new JLabel(label);
+        JTextField field = new JTextField(20);
+        field.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+        field.setHorizontalAlignment(JTextField.RIGHT);
+        field.setEditable(false);
+        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 5));
+        row.add(field);
+        row.add(lbl);
+        parent.add(row);
+        return field;
+    }
+
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+        meterField.setText(Model.format(model.getMeter()));
+        inchField.setText(Model.format(model.getInch()));
+        footField.setText(Model.format(model.getFoot()));
+        yardField.setText(Model.format(model.getYard()));
+    }
+
+    public JTextField getInputField() { return inputField; }
+    public JComboBox<String> getUnitBox() { return unitBox; }
+}
+@@solution Controller.java
+import java.awt.event.*;
+public class Controller implements ActionListener {
+    private Model model;
+    private View view;
+
+    public void initialise(Model model, View view) {
+        this.model = model;
+        this.view = view;
+    }
+
+    private static boolean isNumberBetweenZeroAndNine(String str) {
+        try {
+            int i = Integer.valueOf(str);
+            return i >= 0 && i <= 9;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        StringBuilder sb = model.getStringBuilder();
+        sb.setLength(0);
+        sb.append(view.getInputField().getText());
+
+        String cmd = e.getActionCommand();
+        if (isNumberBetweenZeroAndNine(cmd)) {
+            sb.append(cmd);
+            view.getInputField().setText(sb.toString());
+        } else if (cmd.equals(".")) {
+            if (sb.indexOf(".") < 0) {
+                sb.append(cmd);
+                view.getInputField().setText(sb.toString());
+            }
+        } else if (cmd.equals("C")) {
+            reset();
+        } else if (cmd.equals("Calculate")) {
+            try {
+                String text = sb.toString().replace(',', '.');
+                model.calculate(Double.parseDouble(text));
+            } catch (NumberFormatException ex) {
+                reset();
+            }
+        } else if (cmd.equals("choose")) {
+            model.setUnit((String) view.getUnitBox().getSelectedItem());
+        }
+        view.repaint();
+    }
+
+    private void reset() {
+        model.initialise(0, (String) view.getUnitBox().getSelectedItem());
+        model.getStringBuilder().setLength(0);
+        view.getInputField().setText("");
+    }
+}
+@@solution Model.java
+import java.text.DecimalFormat;
+
+public class Model {
+	private double meter;
+	private double inch;
+	private double foot;
+	private double yard;
+	
+	private String unit;
+	private StringBuilder builder;
+
+	public void initialise(double value, String unit) {
+		this.unit = unit;
+		this.builder = new StringBuilder();
+		
+		calculate(value);
+	}
+	
+	public double getMeter() {
+		return meter;
+	}
+
+	public void setMeter(double meter) {
+		this.meter = meter;
+		inch = 1. / 0.0254 * meter;
+		foot = 1. / 0.3048 * meter;
+		yard = 1. / 0.9144 * meter;
+	}
+
+	public double getInch() {
+		return inch;
+	}
+
+	public void setInch(double inch) {
+		this.inch = inch;
+		
+		meter = 0.0254 * inch;
+		foot = 1. / 12. * inch;
+		yard = 1. / 36. * inch;
+	}
+
+	public double getFoot() {
+		return foot;
+	}
+
+	public void setFoot(double foot) {
+		this.foot = foot;
+		meter = 0.3048 * foot;
+		inch = 12 * foot;
+		yard = 1. / 3. * foot;
+	}
+
+	public double getYard() {
+		return yard;
+	}
+
+	public void setYard(double yard) {
+		this.yard = yard;
+		meter = 0.9144 * yard;
+		inch = 36 * yard;
+		foot = 3 * yard;
+	}
+
+	public void setUnit(String unit) {
+		double value = 0;
+		
+		switch (this.unit) {
+			case "m":
+				value = getMeter();
+				break;
+			case "inch":
+				value = getInch();
+				break;				
+			case "foot":
+				value = getFoot();
+				break;
+			case "yard":
+				value = getYard();
+				break;
+		}
+		
+		this.unit = unit;
+		calculate(value);
+	}
+
+	public StringBuilder getStringBuilder() {
+		return builder;
+	}
+
+	public void calculate(double value) {
+		switch (unit) {
+			case "m":
+				setMeter(value);
+				break;
+			case "inch":
+				setInch(value);
+				break;				
+			case "foot":
+				setFoot(value);
+				break;
+			case "yard":
+				setYard(value);
+				break;
+		}
+	}
+	
+	public static String format(double value) {
+		return new DecimalFormat("#.####").format(value);
+	}
+}
+@@solution Messages_en.properties
+title=Unit Converter
+calculate=Calculate
+@@solution Messages_de.properties
+title=Einheitenumrechner
+calculate=Berechnen
+@@solution Notizen.txt
+Rahmenfenster: BorderLayout (hgap 10, vgap 10)
+Panel 1 (oben, NORTH): FlowLayout (Textfeld + JComboBox)
+Panel 2 (Mitte, CENTER): GridLayout 4 x 3 mit 12 JButtons (7 8 9 / 4 5 6 / 1 2 3 / 0 . C)
+Panel 3 (rechts, EAST): GridLayout 4 x 1, je Zeile ein Unter-Panel mit FlowLayout (JTextField + JLabel)
+Panel 4 (unten, SOUTH): FlowLayout mit einem JButton "Calculate"
+@@step 10
+@@title View und Launcher
+@@text
+Definiere <code>View</code> als Rahmenfenster mit der parameterlosen Methode <code>initialise</code>. Titel „Unit Converter“, Anwendung endet beim Schließen, Größe nach den Anforderungen der Steuerelemente (<code>pack</code>), sichtbar. <code>Launcher</code> instanziiert und initialisiert die View.
+@@check extends JFrame
+extends\s+JFrame
+@@check void initialise()
+void\s+initialise\s*\(
+@@check setTitle("Unit Converter")
+setTitle\s*\(\s*("Unit Converter"|\w+\.getString\s*\(\s*"\w+"\s*\))\s*\)
+@@check EXIT_ON_CLOSE
+EXIT_ON_CLOSE
+@@check pack()
+pack\s*\(\s*\)
+@@check setVisible(true)
+setVisible\s*\(\s*true\s*\)
+@@check main
+static\s+void\s+main\s*\(
+@@check new View()
+new\s+View\s*\(
+@@hint
+public class View extends JFrame {
+    public void initialise() {
+        setTitle("Unit Converter");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        pack();
+        setVisible(true);
+    }
+}
+
+public class Launcher {
+    public static void main(String[] args) {
+        View view = new View();
+        view.initialise();
+    }
+}
+@@step 9
+@@title Layouts identifizieren (Freitext)
+@@text
+Beschreibe in Stichpunkten: Welches Layout hat das Rahmenfenster, welche die vier Panels (oben grün, Mitte, rechts rot, unten magenta) und welche Steuerelemente stecken jeweils darin? (Im Panel rechts sind die Kindelemente noch einmal in eigene Panels eingebettet.) Das ist eine Texteingabe, hier zählt, dass die Begriffe vorkommen.
+@@scope Notizen.txt
+@@check BorderLayout (Fenster)
+BorderLayout
+@@check FlowLayout
+FlowLayout
+@@check GridLayout
+GridLayout
+@@check JTextField
+JTextField|Textfeld
+@@check JComboBox
+JComboBox|Auswahlbox|Combo
+@@check JButton
+JButton|Button
+@@check JLabel
+JLabel|Label
+@@check 4 Zeilen
+4\s*x\s*3|4,\s*3|\(\s*4\s*,\s*3|4 Zeilen
+@@hint
+Rahmenfenster: BorderLayout (hgap 10, vgap 10)
+Panel 1 (oben, NORTH): FlowLayout (Textfeld + JComboBox)
+Panel 2 (Mitte, CENTER): GridLayout 4 x 3 mit 12 JButtons (7 8 9 / 4 5 6 / 1 2 3 / 0 . C)
+Panel 3 (rechts, EAST): GridLayout 4 x 1, je Zeile ein Unter-Panel mit FlowLayout (JTextField + JLabel)
+Panel 4 (unten, SOUTH): FlowLayout mit einem JButton "Calculate"
+@@step 18
+@@title Layouts konfigurieren und Panels anlegen
+@@text
+In <code>initialise</code>: Layout des Rahmenfensters mit 10 px horizontalem und vertikalem Abstand. Ändere <code>initialise</code> so, dass vor <code>pack</code> die neue Methode <code>addComponents</code> aufgerufen wird. Dort: vier Panels erzeugen, korrekt positionieren, Layouts setzen. Oben: zentriert, hgap 25, vgap 10. Mitte: links 20 px nicht gezeichneter Rand, hgap 5, vgap 5.
+@@check setLayout(new BorderLayout(10, 10))
+setLayout\s*\(\s*new\s+BorderLayout\s*\(\s*10\s*,\s*10\s*\)
+@@check addComponents()
+addComponents\s*\(\s*\)
+@@check FlowLayout(FlowLayout.CENTER, 25, 10)
+FlowLayout\s*\(\s*FlowLayout\.CENTER\s*,\s*25\s*,\s*10\s*\)
+@@check GridLayout(4, 3, 5, 5)
+GridLayout\s*\(\s*4\s*,\s*3\s*,\s*5\s*,\s*5\s*\)
+@@check createEmptyBorder(0, 20, 0, 0)
+createEmptyBorder\s*\(\s*0\s*,\s*20\s*,\s*0\s*,\s*0\s*\)
+@@check NORTH
+BorderLayout\.NORTH|PAGE_START
+@@check CENTER
+BorderLayout\.CENTER
+@@check EAST
+BorderLayout\.EAST|LINE_END
+@@check SOUTH
+BorderLayout\.SOUTH|PAGE_END
+@@hint
+public void initialise() {
+    setTitle("Unit Converter");
+    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    setLayout(new BorderLayout(10, 10));
+    addComponents();
+    pack();
+    setVisible(true);
+}
+
+private void addComponents() {
+    JPanel top = new JPanel(new FlowLayout(FlowLayout.CENTER, 25, 10));
+    JPanel center = new JPanel(new GridLayout(4, 3, 5, 5));
+    center.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
+    JPanel right = new JPanel(new GridLayout(4, 1));
+    JPanel bottom = new JPanel(new FlowLayout());
+
+    add(top, BorderLayout.NORTH);
+    add(center, BorderLayout.CENTER);
+    add(right, BorderLayout.EAST);
+    add(bottom, BorderLayout.SOUTH);
+    // ... Steuerelemente folgen
+}
+@@step 28
+@@title Steuerelemente und Hilfsmethode addField
+@@text
+Panel 1, 2 und 4: ComboBox mit „m“, „inch“, „foot“, „yard“ und Aktionskommando „choose“; Textfeld mit 20 columns, Schrift Monospaced Plain 18, rechtsbündig; die Tasten 7 8 9 4 5 6 1 2 3 0 . C; Button „Calculate“. Panel 3: Hilfsmethode <code>addField(JPanel parent, String label)</code>, die ein Textfeld (wie Panel 1, aber 12 pt, nicht bearbeitbar) und ein Label in ein Panel mit FlowLayout (links, hgap 20, vgap 5) legt, das Panel zu <code>parent</code> hinzufügt und das Textfeld zurückgibt. Speichere die Rückgabewerte in Instanzattributen.
+@@check JComboBox mit den 4 Einheiten
+new\s+JComboBox\s*(<[^>]*>)?\s*\(\s*new\s+String\s*\[\s*\]\s*\{\s*"m"\s*,\s*"inch"\s*,\s*"foot"\s*,\s*"yard"\s*\}
+@@check setActionCommand("choose")
+setActionCommand\s*\(\s*"choose"\s*\)
+@@check new JTextField(20)
+new\s+JTextField\s*\(\s*20\s*\)
+@@check Font.MONOSPACED, Font.PLAIN, 18
+Font\.MONOSPACED\s*,\s*Font\.PLAIN\s*,\s*18
+@@check JTextField.RIGHT
+JTextField\.RIGHT|SwingConstants\.RIGHT
+@@check Tasten (Schleife oder einzeln)
+"7"[\s\S]*"8"[\s\S]*"9"
+@@check Button "Calculate"
+new\s+JButton\s*\(\s*("Calculate"|\w+\.getString\s*\()
+@@check JTextField addField(JPanel parent, String label)
+JTextField\s+addField\s*\(\s*JPanel\s+\w+\s*,\s*String\s+\w+\s*\)
+@@check Font … 12
+Font\.PLAIN\s*,\s*12
+@@check setEditable(false)
+setEditable\s*\(\s*false\s*\)
+@@check FlowLayout(FlowLayout.LEFT, 20, 5)
+FlowLayout\s*\(\s*FlowLayout\.LEFT\s*,\s*20\s*,\s*5\s*\)
+@@check return field
+return\s+\w+\s*;
+@@check Ergebnis in Attribut
+\w+Field\s*=\s*addField\s*\(
+@@hint
+private JTextField inputField, meterField, inchField, footField, yardField;
+private JComboBox<String> unitBox;
+
+// in addComponents():
+inputField = new JTextField(20);
+inputField.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 18));
+inputField.setHorizontalAlignment(JTextField.RIGHT);
+unitBox = new JComboBox<>(new String[]{"m", "inch", "foot", "yard"});
+unitBox.setActionCommand("choose");
+top.add(inputField);
+top.add(unitBox);
+
+String[] keys = {"7","8","9","4","5","6","1","2","3","0",".","C"};
+for (String key : keys) {
+    center.add(new JButton(key));
+}
+bottom.add(new JButton("Calculate"));
+
+meterField = addField(right, "m");
+inchField  = addField(right, "inch");
+footField  = addField(right, "foot");
+yardField  = addField(right, "yard");
+
+private JTextField addField(JPanel parent, String label) {
+    JLabel lbl = new JLabel(label);
+    JTextField field = new JTextField(20);
+    field.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+    field.setHorizontalAlignment(JTextField.RIGHT);
+    field.setEditable(false);
+    JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 5));
+    row.add(field);
+    row.add(lbl);
+    parent.add(row);
+    return field;
+}
+@@step 10
+@@title Model einbinden und paint
+@@text
+<code>initialise</code> nimmt eine <code>Model</code>-Instanz entgegen und speichert sie. Überschreibe <code>paint</code> der View: setze den Text der Ergebnisfelder auf die Werte der passenden Getter des Models, formatiert mit der statischen Methode <code>format</code>. Vergiss nicht den weiteren notwendigen Aufruf in <code>paint</code>. Im Launcher: Model erzeugen, mit 0 und „m“ initialisieren und an die View übergeben.
+@@check initialise(Model …)
+initialise\s*\(\s*Model\s+\w+
+@@check this.model = …
+this\.model\s*=
+@@check public void paint(Graphics g)
+void\s+paint\s*\(\s*Graphics\s+\w+\s*\)
+@@check super.paint(g)
+super\.paint\s*\(\s*g\s*\)
+@@check Model.format(…)
+Model\.format\s*\(
+@@check model.getMeter()
+getMeter\s*\(\s*\)
+@@check getInch/getFoot/getYard
+getInch[\s\S]*getFoot[\s\S]*getYard
+@@check model.initialise(0, "m")
+\.initialise\s*\(\s*0(\.0)?\s*,\s*"m"\s*\)
+@@hint
+private Model model;
+
+public void initialise(Model model) {
+    this.model = model;
+    ...
+}
+
+@Override
+public void paint(Graphics g) {
+    super.paint(g);
+    meterField.setText(Model.format(model.getMeter()));
+    inchField.setText(Model.format(model.getInch()));
+    footField.setText(Model.format(model.getFoot()));
+    yardField.setText(Model.format(model.getYard()));
+}
+
+// Launcher
+Model model = new Model();
+model.initialise(0, "m");
+View view = new View();
+view.initialise(model);
+@@step 25
+@@title Controller einbinden und Logik
+@@text
+<code>initialise</code> der View nimmt den Controller entgegen (speichern), registriere ihn in der View bei den Tasten, „Calculate“ und der ComboBox. Der Controller braucht Zugriff auf Model und View. <code>actionPerformed</code>: StringBuilder des Models auf Länge 0, dann Feldinhalt anhängen. Aktionskommando auswerten: Ziffer 0-9 (statische Funktion nutzen): anhängen und Feld setzen. „.“: ebenso, aber nur wenn noch kein Punkt im StringBuilder. „C“: Model mit 0 und aktueller Auswahl neu initialisieren, StringBuilder leeren, Feld leeren. „Calculate“: Komma durch Punkt ersetzen, <code>calculate</code> mit der Zahl aufrufen, bei Ausnahme wie „C“ zurücksetzen. „choose“: <code>setUnit</code> mit der Auswahl. Am Ende immer <code>repaint</code> der View.
+@@check implements ActionListener
+implements[^{]*ActionListener
+@@check actionPerformed
+void\s+actionPerformed\s*\(\s*ActionEvent
+@@check setLength(0)
+setLength\s*\(\s*0\s*\)
+@@check append(…getText())
+append\s*\(\s*[\w.()]*getText\s*\(\s*\)
+@@check getActionCommand()
+getActionCommand\s*\(\s*\)
+@@check isNumberBetweenZeroAndNine(…)
+isNumberBetweenZeroAndNine\s*\(
+@@check Punkt nur einmal (indexOf/contains)
+indexOf\s*\(\s*"\."|contains\s*\(\s*"\."
+@@check "C"
+"C"
+@@check "Calculate"
+"Calculate"
+@@check replace(',', '.')
+replace\s*\(\s*['"],['"]\s*,\s*['"]\.['"]\s*\)
+@@check Double.parseDouble
+Double\.parseDouble\s*\(
+@@check catch NumberFormatException
+catch\s*\(\s*NumberFormatException
+@@check "choose" → setUnit
+"choose"[\s\S]*setUnit\s*\(
+@@check getSelectedItem()
+getSelectedItem\s*\(\s*\)
+@@check view.repaint()
+view\.repaint\s*\(\s*\)
+@@check addActionListener(controller)
+addActionListener\s*\(\s*(this\.)?controller\s*\)
+@@hint
+public class Controller implements ActionListener {
+    private Model model;
+    private View view;
+
+    public void initialise(Model model, View view) {
+        this.model = model;
+        this.view = view;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        StringBuilder sb = model.getStringBuilder();
+        sb.setLength(0);
+        sb.append(view.getInputField().getText());
+
+        String cmd = e.getActionCommand();
+        if (isNumberBetweenZeroAndNine(cmd)) {
+            sb.append(cmd);
+            view.getInputField().setText(sb.toString());
+        } else if (cmd.equals(".")) {
+            if (sb.indexOf(".") < 0) {
+                sb.append(cmd);
+                view.getInputField().setText(sb.toString());
+            }
+        } else if (cmd.equals("C")) {
+            reset();
+        } else if (cmd.equals("Calculate")) {
+            try {
+                String text = sb.toString().replace(',', '.');
+                model.calculate(Double.parseDouble(text));
+            } catch (NumberFormatException ex) {
+                reset();
+            }
+        } else if (cmd.equals("choose")) {
+            model.setUnit((String) view.getUnitBox().getSelectedItem());
+        }
+        view.repaint();
+    }
+
+    private void reset() {
+        model.initialise(0, (String) view.getUnitBox().getSelectedItem());
+        model.getStringBuilder().setLength(0);
+        view.getInputField().setText("");
+    }
+    // isNumberBetweenZeroAndNine: wie gegeben
+}
+
+// View: Registrierung in addComponents
+unitBox.addActionListener(controller);
+for (String key : keys) {
+    JButton b = new JButton(key);
+    b.addActionListener(controller);
+    center.add(b);
+}
+calcButton.addActionListener(controller);
+@@step 15
+@@title Zusatzaufgabe: Sprachdateien
+@@text
+Prüfe in <code>main</code>, ob ein Programmargument gegeben ist. Dann lade damit als Sprachkennung eine Übersetzungsdatei aus dem Klassenpfad und gib das Objekt an die View. Ohne Argument: Englisch. Scheitert das Laden: Programm beenden. Lege zwei Dateien an (Platzhalter für Einheiten, „Calculate“ und Titel) und nutze die lokalisierten Strings in der View.
+@@check args.length
+args\.length
+@@check new Locale(args[0]) / forLanguageTag
+new\s+Locale\s*\(\s*args\s*\[\s*0\s*\]|forLanguageTag\s*\(\s*args\s*\[\s*0\s*\]
+@@check Locale.ENGLISH
+Locale\.ENGLISH|new\s+Locale\s*\(\s*"en"
+@@check ResourceBundle.getBundle
+ResourceBundle\.getBundle\s*\(
+@@check catch MissingResourceException
+catch\s*\(\s*(MissingResourceException|Exception)
+@@check System.exit(1)
+System\.exit\s*\(\s*[1-9]\s*\)
+@@check bundle.getString("title")
+getString\s*\(\s*"\w+(\.\w+)*"\s*\)
+@@check Messages_en.properties
+Messages_en|\.properties|title\s*=
+@@hint
+public static void main(String[] args) {
+    Locale locale = args.length > 0 ? new Locale(args[0]) : Locale.ENGLISH;
+    ResourceBundle bundle = null;
+    try {
+        bundle = ResourceBundle.getBundle("Messages", locale);
+    } catch (MissingResourceException e) {
+        System.err.println("Sprachdatei nicht gefunden");
+        System.exit(1);
+    }
+    Model model = new Model();
+    model.initialise(0, "m");
+    Controller controller = new Controller();
+    View view = new View();
+    controller.initialise(model, view);
+    view.initialise(model, controller, bundle);
+}
+
+// View: setTitle(bundle.getString("title"));  new JButton(bundle.getString("calculate"));
+// Wichtig: calc.setActionCommand("Calculate"); setzen, sonst kommt im Controller der übersetzte Text (z. B. "Berechnen") an.
+// Hinweis: ComboBox-Werte und Aktionskommandos m/inch/foot/yard NICHT übersetzen (der switch im Model kennt nur diese).
+
+# Messages_en.properties
+title=Unit Converter
+calculate=Calculate
+# Messages_de.properties
+title=Einheitenumrechner
+calculate=Berechnen

@@ -1,0 +1,375 @@
+@@module m6
+@@title Eigenes Zeichnen mit paintComponent
+@@lesson
+<h1>Eigenes Zeichnen mit paintComponent</h1><p><i>Koordinatensystem, Graphics-Methoden und das Tortendiagramm von 2023.</i></p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eef4ff"><b>Ziel:</b> Du kannst Linie, Kreis und Text an berechnete Stellen zeichnen und kennst die Fallen.</td></tr></table><br><p>Swing zeichnet eine Komponente, indem es <code>paintComponent(Graphics g)</code> aufruft. Wenn du selbst zeichnen willst, überschreibst du diese Methode in einer eigenen Komponente (<code>extends JComponent</code> oder <code>JPanel</code>). Das <code>Graphics</code>-Objekt ist dein Stift.</p><h2>Das Koordinatensystem</h2><p>Der Ursprung (0, 0) liegt <b>oben links</b> in der Komponente. Die x-Achse zeigt nach rechts, die y-Achse nach <b>unten</b>. Unten rechts liegt der Punkt (width, height). Das ist die Zeichenaufgabe aus 2022 (Koordinatensystem um einen Button zeichnen).</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><b>Interaktiv:</b> Zu diesem Thema gibt es in der Web-App eine Spielwiese (coord).</td></tr></table><br><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>class</b></font> JDiagram <font color="#0033b3"><b>extends</b></font> JComponent {
+    <font color="#9c6500">@Override</font>
+    <font color="#0033b3"><b>protected</b></font> <font color="#0033b3"><b>void</b></font> paintComponent(Graphics g) {
+        <font color="#0033b3"><b>super</b></font>.paintComponent(g);                    <font color="#7a7f87"><i>// Standard-Zeichnen zuerst</i></font>
+
+        g.drawLine(x1, y1, x2, y2);                 <font color="#7a7f87"><i>// Linie von Punkt zu Punkt</i></font>
+        g.drawOval(x, y, breite, hoehe);            <font color="#7a7f87"><i>// Ellipse im Rechteck, x/y = OBEN LINKS des Rechtecks</i></font>
+        g.drawRect(x, y, breite, hoehe);
+        g.fillRect(x, y, breite, hoehe);            <font color="#7a7f87"><i>// gefüllt</i></font>
+        g.drawString(<font color="#2e7d32">"3"</font>, x, y);                    <font color="#7a7f87"><i>// Text, y = Grundlinie des Textes</i></font>
+        g.setColor(Color.RED);                      <font color="#7a7f87"><i>// Farbe für alles, was danach kommt</i></font>
+    }
+}</pre></td></tr></table><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#fff3e0"><b>Achtung:</b> <code>drawOval(x, y, w, h)</code> bekommt <b>nicht</b> Mittelpunkt und Radius, sondern die obere linke Ecke und die Größe des umschließenden Rechtecks. Und neu zeichnen löst du mit <code>repaint()</code> aus. <code>paintComponent</code> rufst du nie selbst auf.</td></tr></table><br><h2>Das Tortendiagramm (2023)</h2><p>Die Klausur gab dir die Hilfsmethoden <code>getPadding</code>, <code>getCenter</code>, <code>getCrossPoint(prozent)</code> und <code>getLabelPosition(prozent)</code>. <code>prozent</code> geht von 0 bis 1 (nicht bis 100) und läuft im Uhrzeigersinn ab 12 Uhr. Du musst nur die Schleife schreiben: Für jede Note mit Anteil größer 0 eine Trennlinie vom Mittelpunkt zum Kreispunkt bei dem bisher aufsummierten Anteil und ein Label in der Mitte des Stücks. Probiere es im Labor:</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><b>Interaktiv:</b> Zu diesem Thema gibt es in der Web-App eine Spielwiese (torten).</td></tr></table><br><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#9c6500">@Override</font>
+<font color="#0033b3"><b>protected</b></font> <font color="#0033b3"><b>void</b></font> paintComponent(Graphics g) {
+    <font color="#0033b3"><b>super</b></font>.paintComponent(g);
+    <font color="#0033b3"><b>int</b></font>[] grades = model.getGrades();
+    <font color="#0033b3"><b>int</b></font> total = 0;
+    <font color="#0033b3"><b>int</b></font> nonZero = 0;
+    <font color="#0033b3"><b>for</b></font> (<font color="#0033b3"><b>int</b></font> c : grades) { total += c; <font color="#0033b3"><b>if</b></font> (c &gt; 0) nonZero++; }
+    <font color="#0033b3"><b>if</b></font> (total == 0) <font color="#0033b3"><b>return</b></font>;
+
+    Point p = getPadding();
+    g.drawOval(p.x, p.y, getWidth() - 2 * p.x, getHeight() - 2 * p.y);
+
+    <font color="#0033b3"><b>double</b></font> sum = 0;                                       <font color="#7a7f87"><i>// aufsummierter Anteil der vorherigen Stücke</i></font>
+    <font color="#0033b3"><b>for</b></font> (<font color="#0033b3"><b>int</b></font> i = 0; i &lt; grades.length; i++) {
+        <font color="#0033b3"><b>if</b></font> (grades[i] == 0) <font color="#0033b3"><b>continue</b></font>;                     <font color="#7a7f87"><i>// nur werthaltige Noten</i></font>
+        <font color="#0033b3"><b>double</b></font> share = grades[i] / (<font color="#0033b3"><b>double</b></font>) total;        <font color="#7a7f87"><i>// double-Cast!</i></font>
+        <font color="#0033b3"><b>if</b></font> (nonZero &gt; 1) {                                <font color="#7a7f87"><i>// bei nur einer Note keine Trennlinie</i></font>
+            Point c = getCenter();
+            Point q = getCrossPoint(sum);
+            g.drawLine(c.x, c.y, q.x, q.y);
+        }
+        Point l = getLabelPosition(sum + share / 2);      <font color="#7a7f87"><i>// Mitte des Stücks</i></font>
+        g.drawString(String.valueOf(i + 1), l.x, l.y);
+        sum += share;
+    }
+}</pre></td></tr></table><p class="cap">Lösungsidee Aufgabe 5</p><h2>paint im JFrame (2024)</h2><p>In 2024 wird nicht eine eigene Komponente gezeichnet, sondern <code>paint(Graphics g)</code> der View überschrieben, um nach jedem Neuzeichnen die Ergebnisfelder mit den Model-Werten zu füllen. Wichtig: erst <code>super.paint(g)</code>, danach <code>setText(...)</code>. Das ist der Hinweis „Denken Sie an eventuelle weitere notwendige Funktionsaufrufe“. Der Controller löst das Ganze am Ende von <code>actionPerformed</code> mit <code>view.repaint()</code> aus.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#9c6500">@Override</font>
+<font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> paint(Graphics g) {
+    <font color="#0033b3"><b>super</b></font>.paint(g);
+    meterField.setText(Model.format(model.getMeter()));
+    inchField.setText(Model.format(model.getInch()));
+    footField.setText(Model.format(model.getFoot()));
+    yardField.setText(Model.format(model.getYard()));
+}</pre></td></tr></table><h3>Lückentext: Zeichnen</h3><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#9c6500">@Override</font>
+<font color="#0033b3"><b>protected</b></font> <font color="#0033b3"><b>void</b></font> /*paintComponent*/(Graphics g) {
+    /*<font color="#0033b3"><b>super</b></font>*/.paintComponent(g);
+    Point p = getPadding();
+    g./*drawOval*/(p.x, p.y, getWidth() - 2 * p.x, getHeight() - 2 * p.y);
+    g./*drawLine*/(c.x, c.y, q.x, q.y);
+    g./*drawString*/(<font color="#2e7d32">"3"</font>, l.x, l.y);
+}</pre></td></tr></table><p class="cap">Die Kommentare zeigen die Lösung der Lücken. Tipp: erst abdecken, dann selbst überlegen.</p><h3>Lückentext: Anteil berechnen</h3><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>double</b></font> share = grades[i] / (/*<font color="#0033b3"><b>double</b></font>*/) total;
+Point l = getLabelPosition(sum + share / /*2*/);
+sum /*+=*/ share;</pre></td></tr></table><p class="cap">Die Kommentare zeigen die Lösung der Lücken. Tipp: erst abdecken, dann selbst überlegen.</p><p>Schreib den Code selbst, so wie du ihn in IntelliJ tippen würdest (Imports darfst du weglassen). „Prüfen“ lässt den Mini-Compiler laufen und schaut, ob alle geforderten Bausteine vorkommen. Die Musterlösung erst danach ansehen.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eef4ff"><b>Weiter:</b> Zu diesem Kapitel gibt es 4 Code-Aufgaben. Du findest sie links im Baum unter dem Kapitel.</td></tr></table><br>
+@@task m6-1
+@@title Kreis mit Rand
+@@text
+Schreibe eine Komponente <code>Target</code> (erweitert <code>JComponent</code>), die in <code>paintComponent</code> eine Ellipse zeichnet, die die Komponente mit 10 px Abstand zu allen Rändern ausfüllt. Vergiss den Aufruf der Elternmethode nicht.
+@@check class Target extends JComponent
+class\s+Target\s+extends\s+(JComponent|JPanel)
+@@check @Override
+@Override
+@@check protected void paintComponent(Graphics g)
+protected\s+void\s+paintComponent\s*\(\s*Graphics\s+\w+\s*\)
+@@check super.paintComponent(g)
+super\.paintComponent\s*\(\s*\w+\s*\)
+@@check drawOval(10, 10, …)
+drawOval\s*\(\s*10\s*,\s*10\s*,
+@@check getWidth() - 20
+getWidth\s*\(\s*\)\s*-\s*20
+@@check getHeight() - 20
+getHeight\s*\(\s*\)\s*-\s*20
+@@starter Target.java
+// Schreibe hier die Klasse Target.
+@@solution Target.java
+public class Target extends JComponent {
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        g.drawOval(10, 10, getWidth() - 20, getHeight() - 20);
+    }
+}
+@@task m6-2
+@@title Diagonale und Text
+@@text
+Zeichne in <code>paintComponent</code> eine rote Linie von oben links nach unten rechts der Komponente und den Text „Hallo“ an der Stelle (20, 30).
+@@check paintComponent(Graphics g)
+void\s+paintComponent\s*\(\s*Graphics\s+\w+\s*\)
+@@check super.paintComponent(g)
+super\.paintComponent\s*\(
+@@check setColor(Color.RED)
+setColor\s*\(\s*Color\.(RED|red)\s*\)
+@@check drawLine(0, 0, getWidth(), getHeight())
+drawLine\s*\(\s*0\s*,\s*0\s*,\s*getWidth\s*\(\s*\)\s*(-\s*1\s*)?,\s*getHeight\s*\(\s*\)\s*(-\s*1\s*)?\)
+@@check drawString("Hallo", 20, 30)
+drawString\s*\(\s*"Hallo"\s*,\s*20\s*,\s*30\s*\)
+@@starter Canvas.java
+public class Canvas extends JPanel {
+
+    // TODO: Dein Code hier
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Zeichnen");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.add(new Canvas());
+        frame.setSize(400, 300);
+        frame.setVisible(true);
+    }
+}
+@@solution Canvas.java
+public class Canvas extends JPanel {
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        g.setColor(Color.RED);
+        g.drawLine(0, 0, getWidth(), getHeight());
+        g.drawString("Hallo", 20, 30);
+    }
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Zeichnen");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.add(new Canvas());
+        frame.setSize(400, 300);
+        frame.setVisible(true);
+    }
+}
+@@task m6-3
+@@title Balkendiagramm
+@@text
+Die Komponente hat ein Attribut <code>int[] values</code>. Zeichne für jeden Wert einen gefüllten Balken: alle gleich breit (Breite / Anzahl), von unten nach oben, Höhe anteilig zum größten Wert. Denk an die Ganzzahl-Falle.
+@@check paintComponent
+void\s+paintComponent\s*\(\s*Graphics\s+\w+\s*\)
+@@check super.paintComponent(g)
+super\.paintComponent\s*\(
+@@check Maximum bestimmen
+(?i)max
+@@check Schleife über values
+for\s*\([^)]*values
+@@check Breite = getWidth() / values.length
+getWidth\s*\(\s*\)\s*\/\s*values\.length
+@@check (double)-Cast
+\(\s*double\s*\)
+@@check fillRect(…)
+fillRect\s*\(
+@@check getHeight() - h (von unten)
+getHeight\s*\(\s*\)\s*-\s*\w+
+@@starter Canvas.java
+public class Canvas extends JPanel {
+    private int[] values = {3, 7, 2, 5};
+
+    // TODO: Dein Code hier
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Zeichnen");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.add(new Canvas());
+        frame.setSize(400, 300);
+        frame.setVisible(true);
+    }
+}
+@@solution Canvas.java
+public class Canvas extends JPanel {
+    private int[] values = {3, 7, 2, 5};
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        int max = 1;
+        for (int v : values) {
+            max = Math.max(max, v);
+        }
+        int w = getWidth() / values.length;
+        for (int i = 0; i < values.length; i++) {
+            int h = (int) (values[i] / (double) max * getHeight());
+            g.fillRect(i * w, getHeight() - h, w - 2, h);
+        }
+    }
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Zeichnen");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.add(new Canvas());
+        frame.setSize(400, 300);
+        frame.setVisible(true);
+    }
+}
+@@task m6-4
+@@title paint im JFrame (2024)
+@@text
+Überschreibe <code>paint(Graphics g)</code> der View. Lass zuerst das normale Zeichnen laufen. Setze danach die Felder <code>meterField</code> und <code>inchField</code> auf die formatierten Werte aus dem Model (<code>Model.format(model.getMeter())</code> usw.).
+@@check @Override
+@Override
+@@check public void paint(Graphics g)
+public\s+void\s+paint\s*\(\s*Graphics\s+\w+\s*\)
+@@check super.paint(g) zuerst
+paint\s*\(\s*Graphics\s+(\w+)\s*\)\s*\{\s*super\.paint\s*\(\s*\1\s*\)
+@@check meterField.setText(Model.format(model.getMeter()))
+meterField\.setText\s*\(\s*Model\.format\s*\(\s*model\.getMeter\s*\(\s*\)\s*\)\s*\)
+@@check inchField.setText(Model.format(model.getInch()))
+inchField\.setText\s*\(\s*Model\.format\s*\(\s*model\.getInch\s*\(\s*\)\s*\)\s*\)
+@@starter View.java
+public class View extends JFrame {
+    private Model model = new Model();
+    private JTextField meterField = new JTextField(12);
+    private JTextField inchField = new JTextField(12);
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        model.initialise(2, "m");
+        setLayout(new FlowLayout());
+        add(meterField);
+        add(inchField);
+    }
+
+    // TODO: Dein Code hier
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@given Model.java
+import java.text.DecimalFormat;
+
+public class Model {
+	private double meter;
+	private double inch;
+	private double foot;
+	private double yard;
+	
+	private String unit;
+	private StringBuilder builder;
+
+	public void initialise(double value, String unit) {
+		this.unit = unit;
+		this.builder = new StringBuilder();
+		
+		calculate(value);
+	}
+	
+	public double getMeter() {
+		return meter;
+	}
+
+	public void setMeter(double meter) {
+		this.meter = meter;
+		inch = 1. / 0.0254 * meter;
+		foot = 1. / 0.3048 * meter;
+		yard = 1. / 0.9144 * meter;
+	}
+
+	public double getInch() {
+		return inch;
+	}
+
+	public void setInch(double inch) {
+		this.inch = inch;
+		
+		meter = 0.0254 * inch;
+		foot = 1. / 12. * inch;
+		yard = 1. / 36. * inch;
+	}
+
+	public double getFoot() {
+		return foot;
+	}
+
+	public void setFoot(double foot) {
+		this.foot = foot;
+		meter = 0.3048 * foot;
+		inch = 12 * foot;
+		yard = 1. / 3. * foot;
+	}
+
+	public double getYard() {
+		return yard;
+	}
+
+	public void setYard(double yard) {
+		this.yard = yard;
+		meter = 0.9144 * yard;
+		inch = 36 * yard;
+		foot = 3 * yard;
+	}
+
+	public void setUnit(String unit) {
+		double value = 0;
+		
+		switch (this.unit) {
+			case "m":
+				value = getMeter();
+				break;
+			case "inch":
+				value = getInch();
+				break;				
+			case "foot":
+				value = getFoot();
+				break;
+			case "yard":
+				value = getYard();
+				break;
+		}
+		
+		this.unit = unit;
+		calculate(value);
+	}
+
+	public StringBuilder getStringBuilder() {
+		return builder;
+	}
+
+	public void calculate(double value) {
+		switch (unit) {
+			case "m":
+				setMeter(value);
+				break;
+			case "inch":
+				setInch(value);
+				break;				
+			case "foot":
+				setFoot(value);
+				break;
+			case "yard":
+				setYard(value);
+				break;
+		}
+	}
+	
+	public static String format(double value) {
+		return new DecimalFormat("#.####").format(value);
+	}
+}
+@@solution View.java
+public class View extends JFrame {
+    private Model model = new Model();
+    private JTextField meterField = new JTextField(12);
+    private JTextField inchField = new JTextField(12);
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        model.initialise(2, "m");
+        setLayout(new FlowLayout());
+        add(meterField);
+        add(inchField);
+    }
+
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+        meterField.setText(Model.format(model.getMeter()));
+        inchField.setText(Model.format(model.getInch()));
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}

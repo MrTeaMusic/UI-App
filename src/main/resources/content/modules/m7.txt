@@ -1,0 +1,291 @@
+@@module m7
+@@title Validierung, Dialoge und Internationalisierung
+@@lesson
+<h1>Validierung, Dialoge und Internationalisierung</h1><p><i>Eingaben prüfen, Fehlerdialog zeigen, Texte aus Sprachdateien laden.</i></p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eef4ff"><b>Ziel:</b> Du fängst falsche Eingaben ab und lädst Beschriftungen aus einem ResourceBundle.</td></tr></table><br><h2>Eingaben prüfen und Fehler melden</h2><p>Textfelder liefern immer Text. Zahlen entstehen erst durch <code>Integer.parseInt</code> oder <code>Double.parseDouble</code>, und die werfen eine <code>NumberFormatException</code>, wenn der Text keine Zahl ist. Genau diese Ausnahme fängst du und zeigst den Fehlerdialog (2023).</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#7a7f87"><i>// in der View</i></font>
+<font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> showError() {
+    JOptionPane.showMessageDialog(<font color="#0033b3"><b>this</b></font>, <font color="#2e7d32">"Ungültige Eingabe"</font>, <font color="#2e7d32">"Fehler"</font>, JOptionPane.ERROR_MESSAGE);
+}
+
+<font color="#7a7f87"><i>// im Controller</i></font>
+<font color="#0033b3"><b>int</b></font>[] grades = <font color="#0033b3"><b>new</b></font> <font color="#0033b3"><b>int</b></font>[fields.length];
+<font color="#0033b3"><b>try</b></font> {
+    <font color="#0033b3"><b>for</b></font> (<font color="#0033b3"><b>int</b></font> i = 0; i &lt; fields.length; i++) {
+        grades[i] = Integer.parseInt(fields[i].getText().trim());
+    }
+} <font color="#0033b3"><b>catch</b></font> (NumberFormatException ex) {
+    view.showError();
+    <font color="#0033b3"><b>return</b></font>;                          <font color="#7a7f87"><i>// Model NICHT ändern</i></font>
+}
+model.setGrades(grades);</pre></td></tr></table><p class="cap">2023</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#7a7f87"><i>// Kommazahlen: Java erwartet einen Punkt</i></font>
+String text = sb.toString().replace(',', '.');
+<font color="#0033b3"><b>try</b></font> {
+    model.calculate(Double.parseDouble(text));
+} <font color="#0033b3"><b>catch</b></font> (NumberFormatException ex) {
+    reset();                         <font color="#7a7f87"><i>// Eingaben zurücksetzen, wie bei "C"</i></font>
+}</pre></td></tr></table><p class="cap">2024</p><h2>Internationalisierung (Zusatzaufgabe 2024)</h2><p><b>i18n</b> (internationalization) bedeutet, ein Programm so zu bauen, dass man es leicht übersetzen kann: Texte raus aus dem Code, in Sprachdateien. <b>l10n</b> (localization) ist die tatsächliche Anpassung an eine Sprache oder Region. Technisch: <code>ResourceBundle</code> plus <code>.properties</code>-Dateien.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#7a7f87"><i># Messages_en.properties</i></font>
+title=Unit Converter
+calculate=Calculate
+
+<font color="#7a7f87"><i># Messages_de.properties</i></font>
+title=Einheitenumrechner
+calculate=Berechnen</pre></td></tr></table><p class="cap">Dateien im src-Ordner (Klassenpfad)</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>static</b></font> <font color="#0033b3"><b>void</b></font> main(String[] args) {
+    Locale locale = args.length &gt; 0 ? <font color="#0033b3"><b>new</b></font> Locale(args[0]) : Locale.ENGLISH;   <font color="#7a7f87"><i>// kein Argument -&gt; Englisch</i></font>
+    ResourceBundle bundle = <font color="#0033b3"><b>null</b></font>;
+    <font color="#0033b3"><b>try</b></font> {
+        bundle = ResourceBundle.getBundle(<font color="#2e7d32">"Messages"</font>, locale);                <font color="#7a7f87"><i>// Basisname ohne _en/.properties</i></font>
+    } <font color="#0033b3"><b>catch</b></font> (MissingResourceException e) {
+        System.err.println(<font color="#2e7d32">"Sprachdatei nicht gefunden"</font>);
+        System.exit(1);                                                       <font color="#7a7f87"><i>// Fehler: Rückgabecode ungleich 0</i></font>
+    }
+    <font color="#7a7f87"><i>// ...</i></font>
+    view.initialise(model, controller, bundle);
+}
+
+<font color="#7a7f87"><i>// in der View:</i></font>
+setTitle(bundle.getString(<font color="#2e7d32">"title"</font>));
+JButton calc = <font color="#0033b3"><b>new</b></font> JButton(bundle.getString(<font color="#2e7d32">"calculate"</font>));</pre></td></tr></table><p class="cap">Launcher und View</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#fff3e0"><b>Achtung:</b> Im Model steht ein <code>switch</code> auf "m", "inch", "foot", "yard". Wenn du die Einheiten in der deutschen Datei zu „Meter“, „Zoll“ übersetzt und in die ComboBox einträgst, passt nichts mehr und die Umrechnung läuft ins Leere. Der Ausweg: Die Aktionskommandos und die Werte der ComboBox bleiben die technischen Schlüssel, nur die <b>Anzeige</b> wird übersetzt. Oder du übernimmst in beiden Dateien dieselben Werte (die Übersetzung wird inhaltlich nicht bewertet).</td></tr></table><br><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eaf7ee"><b>Tipp:</b> In IntelliJ: Die <code>.properties</code>-Dateien müssen im selben Quellordner wie deine Klassen liegen (z. B. <code>src</code>), damit sie im Klassenpfad landen. Programmargument setzen unter Run → Edit Configurations → Program arguments: <code>de</code>. <code>new Locale(String)</code> ist in neueren JDKs als veraltet markiert, funktioniert aber. Alternative: <code>Locale.forLanguageTag(args[0])</code>.</td></tr></table><br><h3>Lückentext: ResourceBundle laden</h3><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre>Locale locale = args.length &gt; 0 ? <font color="#0033b3"><b>new</b></font> /*Locale*/(args[0]) : Locale.ENGLISH;
+<font color="#0033b3"><b>try</b></font> {
+    ResourceBundle bundle = ResourceBundle./*getBundle*/(<font color="#2e7d32">"Messages"</font>, locale);
+    String title = bundle./*getString*/(<font color="#2e7d32">"title"</font>);
+} <font color="#0033b3"><b>catch</b></font> (/*MissingResourceException*/ ex) {
+    System./*exit*/(1);
+}</pre></td></tr></table><p class="cap">Die Kommentare zeigen die Lösung der Lücken. Tipp: erst abdecken, dann selbst überlegen.</p><h3>Lückentext: Fehler abfangen</h3><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>try</b></font> {
+    <font color="#0033b3"><b>double</b></font> d = Double./*parseDouble*/(text.replace(/*','*/, '.'));
+} <font color="#0033b3"><b>catch</b></font> (/*NumberFormatException*/ ex) {
+    view.showError();
+}</pre></td></tr></table><p class="cap">Die Kommentare zeigen die Lösung der Lücken. Tipp: erst abdecken, dann selbst überlegen.</p><p>Schreib den Code selbst, so wie du ihn in IntelliJ tippen würdest (Imports darfst du weglassen). „Prüfen“ lässt den Mini-Compiler laufen und schaut, ob alle geforderten Bausteine vorkommen. Die Musterlösung erst danach ansehen.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eef4ff"><b>Weiter:</b> Zu diesem Kapitel gibt es 4 Code-Aufgaben. Du findest sie links im Baum unter dem Kapitel.</td></tr></table><br>
+@@task m7-1
+@@title Finde die Fehler beim Einlesen
+@@text
+Dieser Code kompiliert nicht. Finde und behebe alle Fehler, bis <b>Kompilieren</b> keine Fehler mehr meldet.<br><br><b>Hinweis:</b> Ein Tippfehler bei parseInt und eine fehlende Klammer bei catch.
+@@check Integer.parseInt
+Integer\.parseInt\s*\(
+@@check catch (NumberFormatException …)
+catch\s*\(\s*NumberFormatException\s+\w+\s*\)
+@@starter Controller.java
+public class Controller {
+    private Model model = new Model();
+    private View view = new View();
+
+    public void handle(String text) {
+        try {
+            int v = Integer.parseint(text);
+            model.setValue(v);
+        } catch (NumberFormatException ex {
+            view.showError();
+        }
+    }
+
+    public static void main(String[] args) {
+        new Controller().handle("12");
+        new Controller().handle("zwölf");
+    }
+}
+@@given Model.java
+public class Model {
+    public void setValue(int v) {
+        System.out.println("Model.setValue(" + v + ")");
+    }
+}
+@@given View.java
+public class View {
+    public void showError() {
+        System.out.println("View.showError()");
+    }
+}
+@@solution Controller.java
+public class Controller {
+    private Model model = new Model();
+    private View view = new View();
+
+    public void handle(String text) {
+        try {
+            int v = Integer.parseInt(text);
+            model.setValue(v);
+        } catch (NumberFormatException ex) {
+            view.showError();
+        }
+    }
+
+    public static void main(String[] args) {
+        new Controller().handle("12");
+        new Controller().handle("zwölf");
+    }
+}
+@@task m7-2
+@@title Fünf Felder einlesen
+@@text
+Schreibe im Controller eine Methode <code>readGrades()</code>: Lies die Texte aus <code>view.getFields()</code> (ein <code>JTextField[]</code>) und wandle sie in ein <code>int[]</code> um. Ist ein Text keine Zahl, zeige <code>view.showError()</code> und brich ab, ohne das Model zu ändern. Sonst <code>model.setGrades(...)</code>.
+@@check void readGrades()
+void\s+readGrades\s*\(\s*\)
+@@check view.getFields()
+view\.getFields\s*\(\s*\)
+@@check new int[…length]
+new\s+int\s*\[\s*\w+\.length\s*\]
+@@check Schleife
+for\s*\(
+@@check Integer.parseInt(… getText() …)
+Integer\.parseInt\s*\([^;]*getText\s*\(\s*\)
+@@check catch (NumberFormatException …)
+catch\s*\(\s*NumberFormatException\s+\w+\s*\)
+@@check view.showError()
+view\.showError\s*\(\s*\)
+@@check return im catch
+showError\s*\(\s*\)\s*;\s*return\s*;
+@@check model.setGrades(…)
+model\.setGrades\s*\(\s*\w+\s*\)
+@@starter Controller.java
+import javax.swing.*;
+
+public class Controller {
+    private Model model;
+    private View view;
+
+    // TODO: Dein Code hier
+}
+@@given View.java
+import javax.swing.*;
+
+public class View extends JFrame {
+    private JTextField[] fields = { new JTextField("1"), new JTextField("2"), new JTextField("x"), new JTextField("4"), new JTextField("5") };
+
+    public JTextField[] getFields() {
+        return fields;
+    }
+
+    public void showError() {
+        System.out.println("View.showError() wurde aufgerufen");
+    }
+}
+@@given Model.java
+public class Model {
+    public void setGrades(int[] grades) {
+        System.out.println("Model.setGrades: " + java.util.Arrays.toString(grades));
+    }
+}
+@@given Launcher.java
+// Startet readGrades() einmal mit den Werten 1, 2, x, 4, 5
+public class Launcher {
+    public static void main(String[] args) throws Exception {
+        Controller c = new Controller();
+        java.lang.reflect.Field fm = Controller.class.getDeclaredField("model");
+        java.lang.reflect.Field fv = Controller.class.getDeclaredField("view");
+        fm.setAccessible(true);
+        fv.setAccessible(true);
+        fm.set(c, new Model());
+        fv.set(c, new View());
+        java.lang.reflect.Method m = Controller.class.getDeclaredMethod("readGrades");
+        m.setAccessible(true);
+        m.invoke(c);
+    }
+}
+@@solution Controller.java
+import javax.swing.*;
+
+public class Controller {
+    private Model model;
+    private View view;
+
+    private void readGrades() {
+        JTextField[] fields = view.getFields();
+        int[] grades = new int[fields.length];
+        try {
+            for (int i = 0; i < fields.length; i++) {
+                grades[i] = Integer.parseInt(fields[i].getText().trim());
+            }
+        } catch (NumberFormatException e) {
+            view.showError();
+            return;
+        }
+        model.setGrades(grades);
+    }
+}
+@@task m7-3
+@@title Kommazahl sicher einlesen
+@@text
+Schreibe <code>public static double parseDecimal(String text)</code>: Ersetze ein Komma durch einen Punkt und wandle in <code>double</code> um. Ist es keine Zahl, gib <code>0.0</code> zurück.
+@@check double parseDecimal(String text)
+double\s+parseDecimal\s*\(\s*String\s+\w+\s*\)
+@@check replace(',', '.')
+replace\s*\(\s*['"],['"]\s*,\s*['"]\.['"]\s*\)
+@@check Double.parseDouble
+Double\.parseDouble\s*\(
+@@check catch (NumberFormatException …)
+catch\s*\(\s*NumberFormatException\s+\w+\s*\)
+@@check return 0.0
+return\s+0(\.0)?\s*;
+@@starter Main.java
+public class Main {
+
+    // TODO: Dein Code hier
+
+    public static void main(String[] args) {
+        System.out.println(parseDecimal("3,5"));  // 3.5
+        System.out.println(parseDecimal("2.25")); // 2.25
+        System.out.println(parseDecimal("abc"));  // 0.0
+    }
+}
+@@solution Main.java
+public class Main {
+
+    public static double parseDecimal(String text) {
+        try {
+            return Double.parseDouble(text.replace(',', '.'));
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
+    }
+
+    public static void main(String[] args) {
+        System.out.println(parseDecimal("3,5"));  // 3.5
+        System.out.println(parseDecimal("2.25")); // 2.25
+        System.out.println(parseDecimal("abc"));  // 0.0
+    }
+}
+@@task m7-4
+@@title Sprachdatei laden
+@@text
+Schreibe die <code>main</code>-Methode: Ist ein Programmargument da, nimm es als Sprache, sonst Englisch. Lade das ResourceBundle „Messages“. Scheitert das, gib eine Meldung auf <code>System.err</code> aus und beende mit Code 1. Gib zum Schluss <code>bundle.getString("title")</code> aus.
+@@args de
+@@check static void main
+static\s+void\s+main\s*\(
+@@check args.length > 0
+args\.length\s*>\s*0|args\.length\s*!=\s*0|args\.length\s*>=\s*1
+@@check Locale aus args[0]
+new\s+Locale\s*\(\s*args\s*\[\s*0\s*\]\s*\)|Locale\.forLanguageTag\s*\(\s*args\s*\[\s*0\s*\]\s*\)
+@@check Locale.ENGLISH
+Locale\.ENGLISH
+@@check ResourceBundle.getBundle("Messages", …)
+ResourceBundle\.getBundle\s*\(\s*"Messages"\s*,
+@@check catch (MissingResourceException …)
+catch\s*\(\s*MissingResourceException\s+\w+\s*\)
+@@check System.err.println
+System\.err\.println\s*\(
+@@check System.exit(1)
+System\.exit\s*\(\s*1\s*\)
+@@check getString("title")
+getString\s*\(\s*"title"\s*\)
+@@starter Main.java
+public class Main {
+
+    // TODO: Dein Code hier
+}
+@@given Messages_en.properties
+title=Unit Converter
+@@given Messages_de.properties
+title=Einheitenumrechner
+@@solution Main.java
+public class Main {
+
+    public static void main(String[] args) {
+        Locale locale = args.length > 0 ? new Locale(args[0]) : Locale.ENGLISH;
+        ResourceBundle bundle = null;
+        try {
+            bundle = ResourceBundle.getBundle("Messages", locale);
+        } catch (MissingResourceException e) {
+            System.err.println("Sprachdatei nicht gefunden");
+            System.exit(1);
+        }
+        System.out.println(bundle.getString("title"));
+    }
+}

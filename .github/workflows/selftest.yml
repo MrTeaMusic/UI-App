@@ -1,0 +1,19 @@
+name: Inhalte prüfen
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Bauen
+        run: mvn -B -q package
+      - name: Alle Musterlösungen kompilieren und prüfen
+        run: java -cp target/classes trainer.SelfTest

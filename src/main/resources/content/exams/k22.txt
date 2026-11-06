@@ -1,0 +1,565 @@
+@@exam k22
+@@title 13.12.2022: Arbeitszeit-Erfassung
+@@intro
+<p><b>Schwerpunkte:</b> Fenster, Toolbar, Tabelle, Controller als ActionListener und PropertyChangeListener</p><p>Eine Anwendung zum Dokumentieren der Arbeitszeit: Toolbar mit [S] Start, [P] Pause, [E] Ende und eine Tabelle mit Zeitpunkt und Aktion. Gegeben sind <code>Model</code> und <code>AZTableModel</code> (siehe Hinweise in den Fehlerlisten des Dokuments). Das Model hat <code>clear()</code>, <code>addStartTime()</code>, <code>addPauseTime()</code>, <code>addEndTime()</code>, <code>getTableModel()</code> und meldet die Eigenschaften „hasStarted“ und „isInPause“.</p>
+@@starter Launcher.java
+// Klasse Launcher mit main
+@@starter View.java
+// Klasse View (Rahmenfenster)
+@@starter Controller.java
+// Klasse Controller
+@@starter Model.java
+import javax.swing.table.DefaultTableModel;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Vector;
+import java.util.concurrent.TimeUnit;
+
+public class Model {
+    private static final String[] TABLE_COLUMS = {"Zeitpunkt", "Aktion"};
+    private static final String LABEL_KOMMEN = "KOMMEN";
+    private static final String LABEL_PAUSE_START = "PAUSE START";
+    private static final String LABEL_PAUSE_END = "PAUSE ENDE";
+    private static final String LABEL_END = "GEHEN";
+
+    private final PropertyChangeSupport propertyChangeSupport;
+    private final AZTableModel tableModel;
+
+    private boolean hasStarted = false;
+    private boolean isInPause = false;
+
+    public Model() {
+        propertyChangeSupport = new PropertyChangeSupport(this);
+        tableModel = new AZTableModel(Model.TABLE_COLUMS, 0);
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener propertyChangeListener) {
+        propertyChangeSupport.addPropertyChangeListener(propertyChangeListener);
+    }
+
+    public void addStartTime() {
+        hasStarted = true;
+
+        tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_KOMMEN});
+
+        propertyChangeSupport.firePropertyChange("hasStarted", false, true);
+    }
+
+    public void addPauseTime() {
+        isInPause = !isInPause;
+
+        if (isInPause) {
+            tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_PAUSE_START});
+        } else {
+            tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_PAUSE_END});
+        }
+
+        propertyChangeSupport.firePropertyChange("isInPause", !isInPause, isInPause);
+    }
+
+    public void addEndTime() {
+        hasStarted = false;
+
+        tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_END});
+
+        String strTotalTime = Model.LABEL_END + ", ∑ " + getTotalTime();
+        tableModel.getDataVector().lastElement().set(1, strTotalTime);
+
+        propertyChangeSupport.firePropertyChange("hasStarted", !hasStarted, hasStarted);
+    }
+
+    public void clear() {
+        tableModel.setRowCount(0);
+    }
+
+    public DefaultTableModel getTableModel() {
+        return tableModel;
+    }
+
+    private String getTotalTime() {
+        Vector<Vector> data = tableModel.getDataVector();
+
+        long wholeWorkingTime = Duration
+                .between(
+                    (LocalDateTime)data.firstElement().firstElement(),
+                    (LocalDateTime)data.lastElement().firstElement()
+                ).toMillis();
+
+        int numBreakPoints = data.size() - 2;
+        long wholePauseTime = 0;
+        for (int i = 1; i <= numBreakPoints - 1; i += 2) {
+            wholePauseTime = Duration
+                    .between(
+                            (LocalDateTime) data.elementAt(i).firstElement(),
+                            (LocalDateTime) data.elementAt(i + 1).firstElement()
+                    ).toMillis();
+        }
+
+        long overallWorkTime = wholeWorkingTime - wholePauseTime;
+        return String.format("%dh, %dm",
+                TimeUnit.MILLISECONDS.toHours(overallWorkTime),
+                TimeUnit.MILLISECONDS.toMinutes(overallWorkTime) -
+                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(overallWorkTime)));
+    }
+}
+@@starter AZTableModel.java
+import javax.swing.table.DefaultTableModel;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+public class AZTableModel extends DefaultTableModel {
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+
+    public AZTableModel(String[] tableColums, int rowCount) {
+        super(tableColums, rowCount);
+    }
+
+    @Override
+    public Object getValueAt(int row, int column) {
+        if (column == 0) {
+            return formatter.format((LocalDateTime)super.getValueAt(row, column));
+        }
+
+        return super.getValueAt(row, column);
+    }
+}
+@@solution Launcher.java
+public class Launcher {
+    public static void main(String[] args) {
+        Model model = new Model();
+        View view = new View();
+        Controller controller = new Controller();
+        controller.initialize(model, view);
+        view.initialize(model, controller);
+    }
+}
+@@solution View.java
+import javax.swing.*;
+import java.awt.*;
+public class View extends JFrame {
+    private Model model;
+    private Controller controller;
+    private JButton btnStart, btnPause, btnEnd;
+    public void initialize(Model model, Controller controller) {
+        this.model = model;
+        this.controller = controller;
+        setTitle("Arbeitszeit");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(400, 200);
+        addComponents();
+        setVisible(true);
+    }
+    private void addComponents() {
+        JToolBar toolBar = new JToolBar();
+        btnStart = new JButton("S");
+        btnPause = new JButton("P");
+        btnEnd = new JButton("E");
+        btnPause.setEnabled(false);
+        btnEnd.setEnabled(false);
+        toolBar.add(btnStart);
+        toolBar.add(btnPause);
+        toolBar.add(btnEnd);
+        add(toolBar, BorderLayout.NORTH);
+        JTable table = new JTable(model.getTableModel());
+        add(new JScrollPane(table), BorderLayout.CENTER);
+        btnStart.addActionListener(controller);
+        btnPause.addActionListener(controller);
+        btnEnd.addActionListener(controller);
+    }
+    public JButton getBtnStart() { return btnStart; }
+    public JButton getBtnPause() { return btnPause; }
+    public JButton getBtnEnd() { return btnEnd; }
+}
+@@solution Controller.java
+import java.awt.event.*;
+import java.beans.*;
+public class Controller implements ActionListener, PropertyChangeListener {
+    private Model model;
+    private View view;
+    public void initialize(Model model, View view) {
+        this.model = model;
+        this.view = view;
+        this.model.addPropertyChangeListener(this);
+    }
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        switch (e.getActionCommand()) {
+            case "S": model.clear(); model.addStartTime(); break;
+            case "P": model.addPauseTime(); break;
+            case "E": model.addEndTime(); break;
+        }
+    }
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        String name = evt.getPropertyName();
+        boolean value = (Boolean) evt.getNewValue();
+        if (name.equals("isInPause")) {
+            view.getBtnEnd().setEnabled(!value);
+        } else if (name.equals("hasStarted")) {
+            if (value) {
+                view.getBtnPause().setEnabled(true);
+                view.getBtnEnd().setEnabled(true);
+                view.getBtnStart().setEnabled(false);
+            } else {
+                view.getBtnPause().setEnabled(false);
+                view.getBtnEnd().setEnabled(false);
+                view.getBtnStart().setEnabled(true);
+            }
+        }
+    }
+}
+@@solution Model.java
+import javax.swing.table.DefaultTableModel;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Vector;
+import java.util.concurrent.TimeUnit;
+
+public class Model {
+    private static final String[] TABLE_COLUMS = {"Zeitpunkt", "Aktion"};
+    private static final String LABEL_KOMMEN = "KOMMEN";
+    private static final String LABEL_PAUSE_START = "PAUSE START";
+    private static final String LABEL_PAUSE_END = "PAUSE ENDE";
+    private static final String LABEL_END = "GEHEN";
+
+    private final PropertyChangeSupport propertyChangeSupport;
+    private final AZTableModel tableModel;
+
+    private boolean hasStarted = false;
+    private boolean isInPause = false;
+
+    public Model() {
+        propertyChangeSupport = new PropertyChangeSupport(this);
+        tableModel = new AZTableModel(Model.TABLE_COLUMS, 0);
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener propertyChangeListener) {
+        propertyChangeSupport.addPropertyChangeListener(propertyChangeListener);
+    }
+
+    public void addStartTime() {
+        hasStarted = true;
+
+        tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_KOMMEN});
+
+        propertyChangeSupport.firePropertyChange("hasStarted", false, true);
+    }
+
+    public void addPauseTime() {
+        isInPause = !isInPause;
+
+        if (isInPause) {
+            tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_PAUSE_START});
+        } else {
+            tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_PAUSE_END});
+        }
+
+        propertyChangeSupport.firePropertyChange("isInPause", !isInPause, isInPause);
+    }
+
+    public void addEndTime() {
+        hasStarted = false;
+
+        tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_END});
+
+        String strTotalTime = Model.LABEL_END + ", ∑ " + getTotalTime();
+        tableModel.getDataVector().lastElement().set(1, strTotalTime);
+
+        propertyChangeSupport.firePropertyChange("hasStarted", !hasStarted, hasStarted);
+    }
+
+    public void clear() {
+        tableModel.setRowCount(0);
+    }
+
+    public DefaultTableModel getTableModel() {
+        return tableModel;
+    }
+
+    private String getTotalTime() {
+        Vector<Vector> data = tableModel.getDataVector();
+
+        long wholeWorkingTime = Duration
+                .between(
+                    (LocalDateTime)data.firstElement().firstElement(),
+                    (LocalDateTime)data.lastElement().firstElement()
+                ).toMillis();
+
+        int numBreakPoints = data.size() - 2;
+        long wholePauseTime = 0;
+        for (int i = 1; i <= numBreakPoints - 1; i += 2) {
+            wholePauseTime = Duration
+                    .between(
+                            (LocalDateTime) data.elementAt(i).firstElement(),
+                            (LocalDateTime) data.elementAt(i + 1).firstElement()
+                    ).toMillis();
+        }
+
+        long overallWorkTime = wholeWorkingTime - wholePauseTime;
+        return String.format("%dh, %dm",
+                TimeUnit.MILLISECONDS.toHours(overallWorkTime),
+                TimeUnit.MILLISECONDS.toMinutes(overallWorkTime) -
+                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(overallWorkTime)));
+    }
+}
+@@solution AZTableModel.java
+import javax.swing.table.DefaultTableModel;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+public class AZTableModel extends DefaultTableModel {
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+
+    public AZTableModel(String[] tableColums, int rowCount) {
+        super(tableColums, rowCount);
+    }
+
+    @Override
+    public Object getValueAt(int row, int column) {
+        if (column == 0) {
+            return formatter.format((LocalDateTime)super.getValueAt(row, column));
+        }
+
+        return super.getValueAt(row, column);
+    }
+}
+@@step 10
+@@title View und Launcher
+@@text
+Definiere die Klasse <code>View</code> als Rahmenfenster mit einer zunächst parameterlosen Methode <code>initialize</code>. Titel „Arbeitszeit“, Anwendung endet beim Schließen, Höhe 200 px, Breite 400 px, sichtbar. Dazu <code>Launcher</code> mit <code>main</code>, der eine <code>View</code> anlegt und initialisiert.
+@@check extends JFrame
+extends\s+JFrame
+@@check void initialize()
+void\s+initialize\s*\(
+@@check setTitle("Arbeitszeit")
+setTitle\s*\(\s*"Arbeitszeit"\s*\)
+@@check EXIT_ON_CLOSE
+EXIT_ON_CLOSE
+@@check setSize(400, 200)
+setSize\s*\(\s*400\s*,\s*200\s*\)
+@@check setVisible(true)
+setVisible\s*\(\s*true\s*\)
+@@check public static void main
+static\s+void\s+main\s*\(
+@@check new View()
+new\s+View\s*\(\s*\)
+@@check .initialize(
+\.initialize\s*\(
+@@hint
+public class View extends JFrame {
+    public void initialize() {
+        setTitle("Arbeitszeit");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(400, 200);
+        setVisible(true);
+    }
+}
+
+public class Launcher {
+    public static void main(String[] args) {
+        View view = new View();
+        view.initialize();
+    }
+}
+@@step 18
+@@title Toolbar und Buttons
+@@text
+Ändere <code>initialize</code> so, dass sie ein <code>Model</code> entgegennimmt (speichern!) und rufe vor <code>setVisible</code> eine neue Methode <code>addComponents</code> auf. In ihr: Toolbar, drei Buttons „S“, „P“, „E“ in Instanzvariablen, nur [S] aktiv, Buttons in die Toolbar, Toolbar in den oberen Bereich des Fensters (Standard-Layout!).
+@@check Model-Parameter
+initialize\s*\(\s*Model\s+\w+
+@@check this.model = …
+this\.model\s*=
+@@check addComponents()
+addComponents\s*\(\s*\)
+@@check new JToolBar()
+new\s+JToolBar\s*\(
+@@check new JButton("S")
+new\s+JButton\s*\(\s*"S"
+@@check new JButton("P")
+new\s+JButton\s*\(\s*"P"
+@@check new JButton("E")
+new\s+JButton\s*\(\s*"E"
+@@check setEnabled(false)
+setEnabled\s*\(\s*false\s*\)
+@@check Buttons zur Toolbar
+\w*[Tt]ool\w*\.add\s*\(|\btb\.add\s*\(
+@@check BorderLayout.NORTH
+BorderLayout\.NORTH|"North"|PAGE_START
+@@hint
+private Model model;
+private JButton btnStart, btnPause, btnEnd;
+
+public void initialize(Model model) {
+    this.model = model;
+    setTitle("Arbeitszeit");
+    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    setSize(400, 200);
+    addComponents();
+    setVisible(true);
+}
+
+private void addComponents() {
+    JToolBar toolBar = new JToolBar();
+    btnStart = new JButton("S");
+    btnPause = new JButton("P");
+    btnEnd = new JButton("E");
+    btnPause.setEnabled(false);
+    btnEnd.setEnabled(false);
+    toolBar.add(btnStart);
+    toolBar.add(btnPause);
+    toolBar.add(btnEnd);
+    add(toolBar, BorderLayout.NORTH);
+}
+@@step 9
+@@title Tabelle und Getter
+@@text
+Ergänze in <code>addComponents</code> eine Tabelle, die du mit dem Rückgabewert von <code>getTableModel()</code> erzeugst. Sie soll den verfügbaren Platz einnehmen und, falls der Platz nicht reicht, scrollen. Lege außerdem Getter für die drei Buttons an.
+@@check new JTable(…)
+new\s+JTable\s*\(
+@@check model.getTableModel()
+model\.getTableModel\s*\(\s*\)
+@@check new JScrollPane(…)
+new\s+JScrollPane\s*\(
+@@check BorderLayout.CENTER
+BorderLayout\.CENTER|"Center"
+@@check Getter für Buttons
+public\s+JButton\s+get\w+\s*\(\s*\)
+@@hint
+JTable table = new JTable(model.getTableModel());
+add(new JScrollPane(table), BorderLayout.CENTER);
+
+public JButton getBtnStart() { return btnStart; }
+public JButton getBtnPause() { return btnPause; }
+public JButton getBtnEnd() { return btnEnd; }
+@@step 20
+@@title Controller: Klassenkopf, initialize, Button-Ereignisse
+@@text
+Definiere <code>Controller</code> so, dass Instanzen als Handler für Buttons und für Änderungen an JavaBean-Eigenschaften registriert werden können. <code>initialize(Model, View)</code> speichert beide und registriert den Controller beim Model (<code>addPropertyChangeListener(this)</code>). Button-Methode: ActionCommand abfragen. „S“: erst <code>clear()</code>, dann <code>addStartTime()</code>. „P“: <code>addPauseTime()</code>. „E“: <code>addEndTime()</code>.
+@@check implements ActionListener
+implements[^{]*ActionListener
+@@check implements PropertyChangeListener
+implements[^{]*PropertyChangeListener
+@@check initialize(Model, View)
+initialize\s*\(\s*Model\s+\w+\s*,\s*View\s+\w+\s*\)
+@@check addPropertyChangeListener(this)
+addPropertyChangeListener\s*\(\s*this\s*\)
+@@check actionPerformed
+void\s+actionPerformed\s*\(\s*ActionEvent
+@@check getActionCommand()
+getActionCommand\s*\(\s*\)
+@@check clear() vor addStartTime()
+clear\s*\(\s*\)\s*;[\s\S]*?addStartTime\s*\(\s*\)
+@@check addPauseTime()
+addPauseTime\s*\(\s*\)
+@@check addEndTime()
+addEndTime\s*\(\s*\)
+@@hint
+public class Controller implements ActionListener, PropertyChangeListener {
+    private Model model;
+    private View view;
+
+    public void initialize(Model model, View view) {
+        this.model = model;
+        this.view = view;
+        this.model.addPropertyChangeListener(this);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        switch (e.getActionCommand()) {
+            case "S":
+                model.clear();
+                model.addStartTime();
+                break;
+            case "P":
+                model.addPauseTime();
+                break;
+            case "E":
+                model.addEndTime();
+                break;
+        }
+    }
+    // propertyChange folgt im nächsten Schritt
+}
+@@step 16
+@@title Controller: propertyChange
+@@text
+In <code>propertyChange</code>: Name der Eigenschaft und neuen Wert in lokalen Variablen ablegen (der Wert als <code>boolean</code>, also casten). „isInPause“: [E] aktiv genau dann, wenn der Wert false ist. „hasStarted“: Wert true: [P] und [E] aktiv, [S] inaktiv. Sonst umgekehrt. Nutze die Getter der View.
+@@check propertyChange(PropertyChangeEvent …)
+void\s+propertyChange\s*\(\s*PropertyChangeEvent
+@@check getPropertyName()
+getPropertyName\s*\(\s*\)
+@@check boolean … = (Boolean) getNewValue()
+boolean\s+\w+\s*=\s*\(\s*(Boolean|boolean)\s*\)\s*\w+\.getNewValue\s*\(\s*\)
+@@check "isInPause"
+"isInPause"
+@@check "hasStarted"
+"hasStarted"
+@@check setEnabled(!…)
+setEnabled\s*\(\s*!\s*\w+\s*\)
+@@check view.getBtn…()
+view\.get\w+\s*\(\s*\)\.setEnabled
+@@hint
+@Override
+public void propertyChange(PropertyChangeEvent evt) {
+    String name = evt.getPropertyName();
+    boolean value = (Boolean) evt.getNewValue();
+
+    if (name.equals("isInPause")) {
+        view.getBtnEnd().setEnabled(!value);
+    } else if (name.equals("hasStarted")) {
+        if (value) {
+            view.getBtnPause().setEnabled(true);
+            view.getBtnEnd().setEnabled(true);
+            view.getBtnStart().setEnabled(false);
+        } else {
+            view.getBtnPause().setEnabled(false);
+            view.getBtnEnd().setEnabled(false);
+            view.getBtnStart().setEnabled(true);
+        }
+    }
+}
+@@step 6
+@@title Verknüpfungen
+@@text
+<code>View.initialize</code> nimmt zusätzlich den Controller entgegen und speichert ihn. In <code>addComponents</code> registrierst du ihn bei allen drei Buttons. Vervollständige <code>main</code>: Controller und Model anlegen, Controller und View entsprechend initialisieren.
+@@check initialize(Model, Controller)
+initialize\s*\(\s*Model\s+\w+\s*,\s*Controller\s+\w+\s*\)
+@@check this.controller = …
+this\.controller\s*=
+@@check btnStart.addActionListener(controller)
+btn\w*\.addActionListener\s*\(\s*(this\.)?controller\s*\)
+@@check new Controller()
+new\s+Controller\s*\(\s*\)
+@@check new Model()
+new\s+Model\s*\(\s*\)
+@@check controller.initialize(
+controller\.initialize\s*\(
+@@check view.initialize(model, controller)
+view\.initialize\s*\(\s*model\s*,\s*controller\s*\)
+@@hint
+// View
+private Controller controller;
+
+public void initialize(Model model, Controller controller) {
+    this.model = model;
+    this.controller = controller;
+    ...
+}
+// in addComponents():
+btnStart.addActionListener(controller);
+btnPause.addActionListener(controller);
+btnEnd.addActionListener(controller);
+
+// Launcher
+public static void main(String[] args) {
+    Model model = new Model();
+    View view = new View();
+    Controller controller = new Controller();
+    controller.initialize(model, view);
+    view.initialize(model, controller);
+}

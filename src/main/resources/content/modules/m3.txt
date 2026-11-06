@@ -1,0 +1,572 @@
+@@module m3
+@@title Steuerelemente anlegen und konfigurieren
+@@lesson
+<h1>Steuerelemente anlegen und konfigurieren</h1><p><i>Buttons, Textfelder, ComboBox, Toolbar, Tabelle, Dialoge. Alles in addComponents().</i></p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eef4ff"><b>Ziel:</b> Du kennst für jedes Steuerelement den Konstruktor und die zwei, drei Methoden, die in den Klausuren vorkamen.</td></tr></table><br><p>Die Aufgaben schreiben es immer vor: Eine Methode <code>addComponents()</code>, die du in <code>initialise()</code> aufrufst. Dort legst du Steuerelemente an, speicherst die, auf die du später zugreifen musst, in Instanzvariablen und fügst sie dem Container hinzu.</p><table border="1" cellpadding="5" cellspacing="0"><tr><th>Steuerelement</th><th>Anlegen</th><th>Wichtige Methoden</th></tr><tr><td><code>JButton</code></td><td><code>new JButton("S")</code></td><td><code>setEnabled(false)</code>, <code>addActionListener(l)</code>, <code>setActionCommand(s)</code></td></tr><tr><td><code>JLabel</code></td><td><code>new JLabel("inch")</code></td><td><code>setText(s)</code></td></tr><tr><td><code>JTextField</code></td><td><code>new JTextField(20)</code> (20 = columns, Breite in Zeichen)</td><td><code>getText()</code>, <code>setText(s)</code>, <code>setEditable(false)</code>, <code>setFont(f)</code>, <code>setHorizontalAlignment(JTextField.RIGHT)</code></td></tr><tr><td><code>JComboBox</code></td><td><code>new JComboBox&lt;&gt;(new String[]{"m","inch"})</code></td><td><code>getSelectedItem()</code>, <code>setActionCommand(s)</code>, <code>addActionListener(l)</code></td></tr><tr><td><code>JToolBar</code></td><td><code>new JToolBar()</code></td><td><code>add(button)</code></td></tr><tr><td><code>JTable</code></td><td><code>new JTable(tableModel)</code></td><td>in <code>JScrollPane</code> einbetten</td></tr><tr><td><code>JScrollPane</code></td><td><code>new JScrollPane(component)</code></td><td>erzeugt Scrollbalken, wenn der Platz nicht reicht</td></tr><tr><td><code>JPanel</code></td><td><code>new JPanel(layout)</code></td><td><code>add(c)</code>, <code>setBorder(b)</code></td></tr><tr><td><code>JOptionPane</code></td><td>statisch: <code>showMessageDialog(parent, text, titel, typ)</code></td><td>Fehlerdialog: <code>JOptionPane.ERROR_MESSAGE</code></td></tr></table><br><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>private</b></font> JTextField inputField;          <font color="#7a7f87"><i>// Instanzvariablen: später im Controller gebraucht</i></font>
+<font color="#0033b3"><b>private</b></font> JComboBox&lt;String&gt; unitBox;
+
+<font color="#0033b3"><b>private</b></font> <font color="#0033b3"><b>void</b></font> addComponents() {
+    inputField = <font color="#0033b3"><b>new</b></font> JTextField(20);
+    inputField.setFont(<font color="#0033b3"><b>new</b></font> Font(Font.MONOSPACED, Font.PLAIN, 18));  <font color="#7a7f87"><i>// Name, Stil, Größe</i></font>
+    inputField.setHorizontalAlignment(JTextField.RIGHT);
+
+    unitBox = <font color="#0033b3"><b>new</b></font> JComboBox&lt;&gt;(<font color="#0033b3"><b>new</b></font> String[]{<font color="#2e7d32">"m"</font>, <font color="#2e7d32">"inch"</font>, <font color="#2e7d32">"foot"</font>, <font color="#2e7d32">"yard"</font>});
+    unitBox.setActionCommand(<font color="#2e7d32">"choose"</font>);
+
+    JPanel top = <font color="#0033b3"><b>new</b></font> JPanel(<font color="#0033b3"><b>new</b></font> FlowLayout(FlowLayout.CENTER, 25, 10));
+    top.add(inputField);
+    top.add(unitBox);
+    add(top, BorderLayout.NORTH);
+}
+
+<font color="#0033b3"><b>public</b></font> JTextField getInputField() { <font color="#0033b3"><b>return</b></font> inputField; }   <font color="#7a7f87"><i>// Getter für den Controller</i></font></pre></td></tr></table><p class="cap">Muster aus 2024</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre>JToolBar toolBar = <font color="#0033b3"><b>new</b></font> JToolBar();
+btnStart = <font color="#0033b3"><b>new</b></font> JButton(<font color="#2e7d32">"S"</font>);
+btnPause = <font color="#0033b3"><b>new</b></font> JButton(<font color="#2e7d32">"P"</font>);
+btnEnd = <font color="#0033b3"><b>new</b></font> JButton(<font color="#2e7d32">"E"</font>);
+btnPause.setEnabled(<font color="#0033b3"><b>false</b></font>);          <font color="#7a7f87"><i>// am Anfang nur [S] aktiv</i></font>
+btnEnd.setEnabled(<font color="#0033b3"><b>false</b></font>);
+toolBar.add(btnStart);
+toolBar.add(btnPause);
+toolBar.add(btnEnd);
+add(toolBar, BorderLayout.NORTH);
+
+JTable table = <font color="#0033b3"><b>new</b></font> JTable(model.getTableModel());   <font color="#7a7f87"><i>// Konstruktor mit TableModel</i></font>
+add(<font color="#0033b3"><b>new</b></font> JScrollPane(table), BorderLayout.CENTER);   <font color="#7a7f87"><i>// Scrollpane = „Container, der zu wenig Platz behandelt“</i></font></pre></td></tr></table><p class="cap">Muster aus 2022</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>private</b></font> JTextField addField(JPanel parent, String label) {
+    JLabel lbl = <font color="#0033b3"><b>new</b></font> JLabel(label);
+    JTextField field = <font color="#0033b3"><b>new</b></font> JTextField(20);
+    field.setFont(<font color="#0033b3"><b>new</b></font> Font(Font.MONOSPACED, Font.PLAIN, 12));
+    field.setHorizontalAlignment(JTextField.RIGHT);
+    field.setEditable(<font color="#0033b3"><b>false</b></font>);                         <font color="#7a7f87"><i>// Ergebnisfeld nicht bearbeitbar</i></font>
+
+    JPanel row = <font color="#0033b3"><b>new</b></font> JPanel(<font color="#0033b3"><b>new</b></font> FlowLayout(FlowLayout.LEFT, 20, 5));
+    row.add(field);
+    row.add(lbl);
+    parent.add(row);
+    <font color="#0033b3"><b>return</b></font> field;                                     <font color="#7a7f87"><i>// Aufrufer speichert es in einer Instanzvariable</i></font>
+}
+
+<font color="#7a7f87"><i>// in addComponents:</i></font>
+meterField = addField(results, <font color="#2e7d32">"m"</font>);
+inchField  = addField(results, <font color="#2e7d32">"inch"</font>);</pre></td></tr></table><p class="cap">Hilfsmethode aus 2024</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#fff3e0"><b>Achtung:</b> Die Tabelle zeigt ihre Kopfzeile nur, wenn sie in einem <code>JScrollPane</code> steckt. Das ist der „spezielle Container“ aus der 2022er Aufgabe.</td></tr></table><br><h3>Lückentext: Toolbar und Tabelle (2022)</h3><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre>JToolBar toolBar = <font color="#0033b3"><b>new</b></font> /*JToolBar*/();
+btnStart = <font color="#0033b3"><b>new</b></font> /*JButton*/(<font color="#2e7d32">"S"</font>);
+btnPause = <font color="#0033b3"><b>new</b></font> JButton(<font color="#2e7d32">"P"</font>);
+btnPause./*setEnabled*/(/*<font color="#0033b3"><b>false</b></font>*/);
+toolBar.add(btnStart);
+toolBar.add(btnPause);
+add(toolBar, /*BorderLayout.NORTH*/);
+
+JTable table = <font color="#0033b3"><b>new</b></font> JTable(model./*getTableModel*/());
+add(<font color="#0033b3"><b>new</b></font> /*JScrollPane*/(table), BorderLayout.CENTER);</pre></td></tr></table><p class="cap">Die Kommentare zeigen die Lösung der Lücken. Tipp: erst abdecken, dann selbst überlegen.</p><h3>Lückentext: Das Eingabefeld (2024)</h3><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre>inputField = <font color="#0033b3"><b>new</b></font> JTextField(/*20*/);
+inputField.setFont(<font color="#0033b3"><b>new</b></font> Font(Font./*MONOSPACED*/, Font./*PLAIN*/, 18));
+inputField.setHorizontalAlignment(JTextField./*RIGHT*/);
+unitBox./*setActionCommand*/(<font color="#2e7d32">"choose"</font>);</pre></td></tr></table><p class="cap">Die Kommentare zeigen die Lösung der Lücken. Tipp: erst abdecken, dann selbst überlegen.</p><p>Schreib den Code selbst, so wie du ihn in IntelliJ tippen würdest (Imports darfst du weglassen). „Prüfen“ lässt den Mini-Compiler laufen und schaut, ob alle geforderten Bausteine vorkommen. Die Musterlösung erst danach ansehen.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eef4ff"><b>Weiter:</b> Zu diesem Kapitel gibt es 6 Code-Aufgaben. Du findest sie links im Baum unter dem Kapitel.</td></tr></table><br>
+@@task m3-1
+@@title Finde die Compiler-Fehler
+@@text
+Dieser Code kompiliert nicht. Finde und behebe alle Fehler, bis <b>Kompilieren</b> keine Fehler mehr meldet.<br><br><b>Hinweis:</b> Ein Objekt ohne new, ein offenes Anführungszeichen, eine offene Klammer.
+@@check new JToolBar()
+new\s+JToolBar\s*\(\s*\)
+@@check new JButton("S")
+new\s+JButton\s*\(\s*"S"\s*\)
+@@check add(toolBar, BorderLayout.NORTH)
+add\s*\(\s*toolBar\s*,\s*BorderLayout\.NORTH\s*\)
+@@starter View.java
+public class View extends JFrame {
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        JToolBar toolBar = new JToolBar();
+        JButton btnStart = JButton("S");
+        JButton btnPause = new JButton("P);
+        btnPause.setEnabled(false);
+        toolBar.add(btnStart);
+        toolBar.add(btnPause);
+        add(toolBar, BorderLayout.NORTH;
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@solution View.java
+public class View extends JFrame {
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        JToolBar toolBar = new JToolBar();
+        JButton btnStart = new JButton("S");
+        JButton btnPause = new JButton("P");
+        btnPause.setEnabled(false);
+        toolBar.add(btnStart);
+        toolBar.add(btnPause);
+        add(toolBar, BorderLayout.NORTH);
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@task m3-2
+@@title Toolbar mit drei Buttons
+@@text
+Erzeuge eine <code>JToolBar</code> und drei Buttons „S“, „P“, „E“, die du in Instanzvariablen <code>btnStart</code>, <code>btnPause</code>, <code>btnEnd</code> speicherst. Nur [S] ist am Anfang aktiv. Die Toolbar kommt oben ins Fenster.
+@@check new JToolBar()
+new\s+JToolBar\s*\(\s*\)
+@@check btnStart = new JButton("S")
+btnStart\s*=\s*new\s+JButton\s*\(\s*"S"\s*\)
+@@check btnPause = new JButton("P")
+btnPause\s*=\s*new\s+JButton\s*\(\s*"P"\s*\)
+@@check btnEnd = new JButton("E")
+btnEnd\s*=\s*new\s+JButton\s*\(\s*"E"\s*\)
+@@check btnPause.setEnabled(false)
+btnPause\.setEnabled\s*\(\s*false\s*\)
+@@check btnEnd.setEnabled(false)
+btnEnd\.setEnabled\s*\(\s*false\s*\)
+@@check Buttons zur Toolbar
+\w+\.add\s*\(\s*btnStart\s*\)
+@@check BorderLayout.NORTH
+BorderLayout\.NORTH
+@@starter View.java
+public class View extends JFrame {
+    private JButton btnStart;
+    private JButton btnPause;
+    private JButton btnEnd;
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        // TODO: Dein Code hier
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@solution View.java
+public class View extends JFrame {
+    private JButton btnStart;
+    private JButton btnPause;
+    private JButton btnEnd;
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        JToolBar toolBar = new JToolBar();
+        btnStart = new JButton("S");
+        btnPause = new JButton("P");
+        btnEnd = new JButton("E");
+        btnPause.setEnabled(false);
+        btnEnd.setEnabled(false);
+        toolBar.add(btnStart);
+        toolBar.add(btnPause);
+        toolBar.add(btnEnd);
+        add(toolBar, BorderLayout.NORTH);
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@task m3-3
+@@title Tabelle mit Scrollbalken
+@@text
+Erzeuge eine <code>JTable</code> mit dem TableModel aus <code>model.getTableModel()</code>. Sie soll den restlichen Platz im Fenster einnehmen und scrollen können.
+@@check new JTable(model.getTableModel())
+new\s+JTable\s*\(\s*model\.getTableModel\s*\(\s*\)\s*\)
+@@check new JScrollPane(…)
+new\s+JScrollPane\s*\(\s*\w+\s*\)
+@@check BorderLayout.CENTER
+BorderLayout\.CENTER
+@@starter View.java
+public class View extends JFrame {
+    private Model model = new Model();
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        model.addStartTime();
+        // TODO: Dein Code hier
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@given Model.java
+import javax.swing.table.DefaultTableModel;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Vector;
+import java.util.concurrent.TimeUnit;
+
+public class Model {
+    private static final String[] TABLE_COLUMS = {"Zeitpunkt", "Aktion"};
+    private static final String LABEL_KOMMEN = "KOMMEN";
+    private static final String LABEL_PAUSE_START = "PAUSE START";
+    private static final String LABEL_PAUSE_END = "PAUSE ENDE";
+    private static final String LABEL_END = "GEHEN";
+
+    private final PropertyChangeSupport propertyChangeSupport;
+    private final AZTableModel tableModel;
+
+    private boolean hasStarted = false;
+    private boolean isInPause = false;
+
+    public Model() {
+        propertyChangeSupport = new PropertyChangeSupport(this);
+        tableModel = new AZTableModel(Model.TABLE_COLUMS, 0);
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener propertyChangeListener) {
+        propertyChangeSupport.addPropertyChangeListener(propertyChangeListener);
+    }
+
+    public void addStartTime() {
+        hasStarted = true;
+
+        tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_KOMMEN});
+
+        propertyChangeSupport.firePropertyChange("hasStarted", false, true);
+    }
+
+    public void addPauseTime() {
+        isInPause = !isInPause;
+
+        if (isInPause) {
+            tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_PAUSE_START});
+        } else {
+            tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_PAUSE_END});
+        }
+
+        propertyChangeSupport.firePropertyChange("isInPause", !isInPause, isInPause);
+    }
+
+    public void addEndTime() {
+        hasStarted = false;
+
+        tableModel.addRow(new Object[]{LocalDateTime.now(), Model.LABEL_END});
+
+        String strTotalTime = Model.LABEL_END + ", ∑ " + getTotalTime();
+        tableModel.getDataVector().lastElement().set(1, strTotalTime);
+
+        propertyChangeSupport.firePropertyChange("hasStarted", !hasStarted, hasStarted);
+    }
+
+    public void clear() {
+        tableModel.setRowCount(0);
+    }
+
+    public DefaultTableModel getTableModel() {
+        return tableModel;
+    }
+
+    private String getTotalTime() {
+        Vector<Vector> data = tableModel.getDataVector();
+
+        long wholeWorkingTime = Duration
+                .between(
+                    (LocalDateTime)data.firstElement().firstElement(),
+                    (LocalDateTime)data.lastElement().firstElement()
+                ).toMillis();
+
+        int numBreakPoints = data.size() - 2;
+        long wholePauseTime = 0;
+        for (int i = 1; i <= numBreakPoints - 1; i += 2) {
+            wholePauseTime = Duration
+                    .between(
+                            (LocalDateTime) data.elementAt(i).firstElement(),
+                            (LocalDateTime) data.elementAt(i + 1).firstElement()
+                    ).toMillis();
+        }
+
+        long overallWorkTime = wholeWorkingTime - wholePauseTime;
+        return String.format("%dh, %dm",
+                TimeUnit.MILLISECONDS.toHours(overallWorkTime),
+                TimeUnit.MILLISECONDS.toMinutes(overallWorkTime) -
+                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(overallWorkTime)));
+    }
+}
+@@given AZTableModel.java
+import javax.swing.table.DefaultTableModel;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+public class AZTableModel extends DefaultTableModel {
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+
+    public AZTableModel(String[] tableColums, int rowCount) {
+        super(tableColums, rowCount);
+    }
+
+    @Override
+    public Object getValueAt(int row, int column) {
+        if (column == 0) {
+            return formatter.format((LocalDateTime)super.getValueAt(row, column));
+        }
+
+        return super.getValueAt(row, column);
+    }
+}
+@@solution View.java
+public class View extends JFrame {
+    private Model model = new Model();
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        model.addStartTime();
+        JTable table = new JTable(model.getTableModel());
+        add(new JScrollPane(table), BorderLayout.CENTER);
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@task m3-4
+@@title Hilfsmethode addField
+@@text
+Schreibe <code>private JTextField addField(JPanel parent, String label)</code>: Ein Textfeld mit 20 Spalten, Schrift Monospaced Plain 12, rechtsbündig, nicht bearbeitbar. Dazu ein Label mit dem übergebenen Text. Beides in ein neues Panel mit FlowLayout (links, 20, 5), das Panel in <code>parent</code>, das Textfeld zurückgeben.
+@@check JTextField addField(JPanel parent, String label)
+JTextField\s+addField\s*\(\s*JPanel\s+\w+\s*,\s*String\s+\w+\s*\)
+@@check new JTextField(20)
+new\s+JTextField\s*\(\s*20\s*\)
+@@check Font.MONOSPACED, Font.PLAIN, 12
+new\s+Font\s*\(\s*Font\.MONOSPACED\s*,\s*Font\.PLAIN\s*,\s*12\s*\)
+@@check setHorizontalAlignment(JTextField.RIGHT)
+setHorizontalAlignment\s*\(\s*(JTextField|SwingConstants)\.RIGHT\s*\)
+@@check setEditable(false)
+setEditable\s*\(\s*false\s*\)
+@@check new JLabel(label)
+new\s+JLabel\s*\(\s*\w+\s*\)
+@@check FlowLayout(FlowLayout.LEFT, 20, 5)
+FlowLayout\s*\(\s*FlowLayout\.LEFT\s*,\s*20\s*,\s*5\s*\)
+@@check parent.add(…)
+\w+\.add\s*\(\s*\w+\s*\)\s*;[\s\S]*return
+@@check return field
+return\s+\w+\s*;
+@@starter View.java
+public class View extends JFrame {
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        JPanel right = new JPanel(new GridLayout(4, 1));
+        addField(right, "m");
+        addField(right, "inch");
+        add(right, BorderLayout.CENTER);
+    }
+
+    // TODO: Dein Code hier
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@solution View.java
+public class View extends JFrame {
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        JPanel right = new JPanel(new GridLayout(4, 1));
+        addField(right, "m");
+        addField(right, "inch");
+        add(right, BorderLayout.CENTER);
+    }
+
+    private JTextField addField(JPanel parent, String label) {
+        JTextField field = new JTextField(20);
+        field.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+        field.setHorizontalAlignment(JTextField.RIGHT);
+        field.setEditable(false);
+        JLabel lbl = new JLabel(label);
+        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 5));
+        row.add(field);
+        row.add(lbl);
+        parent.add(row);
+        return field;
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@task m3-5
+@@title Auswahlbox mit Getter
+@@text
+Lege eine Instanzvariable <code>unitBox</code> vom Typ <code>JComboBox&lt;String&gt;</code> an, fülle sie mit „m“, „inch“, „foot“, „yard“, setze das Aktionskommando „choose“ und schreibe einen öffentlichen Getter.
+@@check JComboBox<String> unitBox
+JComboBox\s*<\s*String\s*>\s+unitBox
+@@check new JComboBox<>(…)
+new\s+JComboBox\s*<\s*(String)?\s*>\s*\(
+@@check "m", "inch", "foot", "yard"
+"m"\s*,\s*"inch"\s*,\s*"foot"\s*,\s*"yard"
+@@check setActionCommand("choose")
+setActionCommand\s*\(\s*"choose"\s*\)
+@@check public JComboBox<String> getUnitBox()
+public\s+JComboBox\s*<\s*String\s*>\s+get\w+\s*\(\s*\)
+@@check return unitBox
+return\s+unitBox\s*;
+@@starter View.java
+public class View extends JFrame {
+    // TODO: Instanzvariable unitBox
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        // TODO: unitBox anlegen, füllen, Aktionskommando setzen
+        // add(unitBox, BorderLayout.NORTH);
+    }
+
+    // TODO: öffentlicher Getter
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@solution View.java
+public class View extends JFrame {
+    private JComboBox<String> unitBox;
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        unitBox = new JComboBox<>(new String[]{"m", "inch", "foot", "yard"});
+        unitBox.setActionCommand("choose");
+        add(unitBox, BorderLayout.NORTH);
+    }
+
+    public JComboBox<String> getUnitBox() {
+        return unitBox;
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@task m3-6
+@@title Fehlerdialog
+@@text
+Schreibe in der View eine öffentliche Methode <code>showError()</code>, die einen Fehlerdialog mit dem Text „Ungültige Eingabe“ und dem Titel „Fehler“ anzeigt.
+@@check public void showError()
+public\s+void\s+showError\s*\(\s*\)
+@@check JOptionPane.showMessageDialog
+JOptionPane\.showMessageDialog\s*\(
+@@check "Ungültige Eingabe"
+"Ungültige Eingabe"
+@@check "Fehler"
+"Fehler"
+@@check ERROR_MESSAGE
+JOptionPane\.ERROR_MESSAGE
+@@starter View.java
+public class View extends JFrame {
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        JButton test = new JButton("Fehler zeigen");
+        test.addActionListener(e -> showError());
+        add(test);
+    }
+
+    // TODO: Dein Code hier
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
+@@solution View.java
+public class View extends JFrame {
+
+    public void initialise() {
+        setTitle("Übung");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addComponents();
+        pack();
+        setVisible(true);
+    }
+
+    private void addComponents() {
+        JButton test = new JButton("Fehler zeigen");
+        test.addActionListener(e -> showError());
+        add(test);
+    }
+
+    public void showError() {
+        JOptionPane.showMessageDialog(this, "Ungültige Eingabe", "Fehler", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public static void main(String[] args) {
+        new View().initialise();
+    }
+}
