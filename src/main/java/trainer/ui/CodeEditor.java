@@ -44,8 +44,7 @@ import java.util.regex.Pattern;
  */
 public class CodeEditor extends JScrollPane {
 
-    private static final Font FONT = new Font(Font.MONOSPACED, Font.PLAIN, 14);
-    private static final Color ERROR_BG = new Color(255, 225, 225);
+    private static final Font FONT = Theme.mono(14);
     private static final Pattern TOKENS = Pattern.compile(
             "(//[^\n]*|/\\*[\\s\\S]*?(\\*/|$))|(\"(?:\\\\.|[^\"\\\\\n])*\"?|'(?:\\\\.|[^'\\\\\n])*'?)|(@\\w+)|\\b([A-Za-z_]\\w*)\\b|(\\b\\d+(\\.\\d+)?\\b)|(^\\s*#[^\n]*)",
             Pattern.MULTILINE);
@@ -67,13 +66,13 @@ public class CodeEditor extends JScrollPane {
     private final Gutter gutter = new Gutter();
     private final boolean java;
 
-    private final SimpleAttributeSet plain = style(new Color(0x1f2328), false, false);
-    private final SimpleAttributeSet keyword = style(new Color(0x0033b3), true, false);
-    private final SimpleAttributeSet string = style(new Color(0x067d17), false, false);
-    private final SimpleAttributeSet comment = style(new Color(0x8c8c8c), false, true);
-    private final SimpleAttributeSet annotation = style(new Color(0x9e880d), false, false);
-    private final SimpleAttributeSet type = style(new Color(0x000080), false, false);
-    private final SimpleAttributeSet number = style(new Color(0x1750eb), false, false);
+    private final SimpleAttributeSet plain = style(Theme.plain, false, false);
+    private final SimpleAttributeSet keyword = style(Theme.keyword, true, false);
+    private final SimpleAttributeSet string = style(Theme.string, false, false);
+    private final SimpleAttributeSet comment = style(Theme.comment, false, true);
+    private final SimpleAttributeSet annotation = style(Theme.annotation, false, false);
+    private final SimpleAttributeSet type = style(Theme.type, false, false);
+    private final SimpleAttributeSet number = style(Theme.number, false, false);
 
     public CodeEditor(String content, boolean editable, boolean java) {
         this.java = java;
@@ -81,10 +80,15 @@ public class CodeEditor extends JScrollPane {
         setRowHeaderView(gutter);
         setBorder(BorderFactory.createEmptyBorder());
         text.setFont(FONT);
-        text.setMargin(new java.awt.Insets(4, 6, 4, 6));
+        text.setMargin(new java.awt.Insets(6, 10, 6, 10));
+        text.setCaretColor(Theme.fg);
+        text.setSelectionColor(Theme.dark ? new Color(0x214283) : new Color(0xcfe0ff));
+        text.setSelectedTextColor(null);
         text.setEditable(editable);
         if (!editable) {
-            text.setBackground(new Color(0xf6f7f9));
+            text.setBackground(Theme.readOnlyBg);
+        } else {
+            text.setBackground(Theme.editorBg);
         }
         setTabs();
         text.setText(content);
@@ -370,14 +374,14 @@ public class CodeEditor extends JScrollPane {
 
     private class LinePainter extends DefaultHighlighter.DefaultHighlightPainter {
         LinePainter() {
-            super(ERROR_BG);
+            super(Theme.errorLine);
         }
 
         @Override
         public void paint(Graphics g, int p0, int p1, java.awt.Shape bounds, javax.swing.text.JTextComponent c) {
             try {
                 Rectangle r = c.modelToView2D(p0).getBounds();
-                g.setColor(ERROR_BG);
+                g.setColor(Theme.errorLine);
                 g.fillRect(0, r.y, c.getWidth(), r.height);
             } catch (BadLocationException ignored) {
                 // egal
@@ -403,7 +407,7 @@ public class CodeEditor extends JScrollPane {
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             Rectangle clip = g.getClipBounds();
-            g.setColor(new Color(0xf0f1f4));
+            g.setColor(text.isEditable() ? Theme.gutterBg : Theme.readOnlyBg);
             g.fillRect(clip.x, clip.y, clip.width, clip.height);
             FontMetrics fm = g.getFontMetrics();
             Element root = doc.getDefaultRootElement();
@@ -416,10 +420,10 @@ public class CodeEditor extends JScrollPane {
                     String num = String.valueOf(i + 1);
                     boolean err = errorLines.contains(i + 1);
                     if (err) {
-                        g.setColor(new Color(0xd32f2f));
+                        g.setColor(Theme.err);
                         g.fillOval(3, r.y + r.height / 2 - 3, 6, 6);
                     }
-                    g.setColor(err ? new Color(0xd32f2f) : new Color(0x9aa0a6));
+                    g.setColor(err ? Theme.err : Theme.gutterFg);
                     int y = r.y + (r.height + fm.getAscent() - fm.getDescent()) / 2;
                     g.drawString(num, getWidth() - 6 - fm.stringWidth(num), y);
                 } catch (BadLocationException ignored) {

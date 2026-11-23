@@ -130,7 +130,8 @@ public class WorkspacePanel extends JPanel {
         split.setBorder(BorderFactory.createEmptyBorder());
         add(split, BorderLayout.CENTER);
 
-        status.setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
+        status.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Theme.border),
+                BorderFactory.createEmptyBorder(5, 12, 5, 12)));
         add(status, BorderLayout.SOUTH);
 
         autosave = new Timer(800, e -> saveAll());
@@ -152,20 +153,23 @@ public class WorkspacePanel extends JPanel {
     private JToolBar buildToolbar() {
         JToolBar tb = new JToolBar();
         tb.setFloatable(false);
-        tb.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
-        JButton compile = button("Kompilieren", "Nur übersetzen und Fehler anzeigen (Strg+B)", this::compileOnly);
-        runButton.setToolTipText("Kompilieren und starten (F5)");
+        tb.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 10));
+        JButton compile = button("Kompilieren", "Nur übersetzen und Fehler anzeigen (" + Keys.COMPILE + ")", this::compileOnly);
+        runButton.setToolTipText("Kompilieren und starten (" + Keys.RUN + ")");
         runButton.addActionListener(e -> runProgram());
         stopButton.setToolTipText("Laufendes Programm beenden");
         stopButton.setEnabled(false);
         stopButton.addActionListener(e -> stopProgram());
+        primary(runButton, Theme.ok);
         tb.add(compile);
+        tb.add(Box.createHorizontalStrut(4));
         tb.add(runButton);
+        tb.add(Box.createHorizontalStrut(4));
         tb.add(stopButton);
         if (!ws.playground()) {
             tb.addSeparator();
-            JButton check = button("✓ Prüfen", "Kompilieren und Anforderungen prüfen (Strg+Enter)", this::check);
-            check.setFont(check.getFont().deriveFont(Font.BOLD));
+            JButton check = button("✓ Prüfen", "Kompilieren und Anforderungen prüfen (" + Keys.CHECK + ")", this::check);
+            primary(check, Theme.accent);
             tb.add(check);
             tb.add(button("Lösung", "Musterlösung ansehen", this::showSolution));
             tb.add(button("Zurücksetzen", "Zurück zum Ausgangscode", this::reset));
@@ -191,6 +195,12 @@ public class WorkspacePanel extends JPanel {
         return tb;
     }
 
+    /** Hebt einen wichtigen Knopf farbig hervor (FlatLaf-Stil). */
+    private static void primary(JButton b, Color c) {
+        b.putClientProperty("FlatLaf.style", "background: " + Theme.hex(c) + "; foreground: #ffffff; "
+                + "hoverBackground: " + Theme.hex(c.brighter()) + "; pressedBackground: " + Theme.hex(c.darker()) + "; borderWidth: 0; font: bold");
+    }
+
     private static JButton button(String text, String tip, Runnable r) {
         JButton b = new JButton(text);
         b.setToolTipText(tip);
@@ -201,7 +211,9 @@ public class WorkspacePanel extends JPanel {
 
     private void buildBottom() {
         console.setEditable(false);
-        console.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 13));
+        console.setFont(Theme.mono(13));
+        console.setBackground(Theme.editorBg);
+        console.setMargin(new java.awt.Insets(6, 10, 6, 10));
         problemList.setCellRenderer(new ProblemRenderer());
         problemList.addMouseListener(new MouseAdapter() {
             @Override
@@ -254,6 +266,7 @@ public class WorkspacePanel extends JPanel {
     private void installShortcuts() {
         int menu = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
         shortcut(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), "run", this::runProgram);
+        shortcut(KeyStroke.getKeyStroke(KeyEvent.VK_R, menu), "run2", this::runProgram);
         shortcut(KeyStroke.getKeyStroke(KeyEvent.VK_B, menu), "compile", this::compileOnly);
         if (!ws.playground()) {
             shortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, menu), "check", this::check);
@@ -428,10 +441,10 @@ public class WorkspacePanel extends JPanel {
         editors.forEach((name, ed) -> ed.markErrors(lines.getOrDefault(name, Set.of())));
         if (r.ok()) {
             status.setText("Kompiliert ohne Fehler" + (r.problems().isEmpty() ? "." : " (" + r.problems().size() + " Warnung(en))."));
-            status.setForeground(new Color(0x2e7d32));
+            status.setForeground(Theme.ok);
         } else {
             status.setText(errors + " Compiler-Fehler. Klick auf einen Fehler unten springt zur Stelle.");
-            status.setForeground(new Color(0xc62828));
+            status.setForeground(Theme.err);
             bottom.setSelectedIndex(0);
             if (!problemModel.isEmpty()) {
                 problemList.setSelectedIndex(0);
@@ -450,8 +463,13 @@ public class WorkspacePanel extends JPanel {
 
     private void compileOnly() {
         compile(currentFiles(), r -> {
-            if (r.ok() && problemModel.isEmpty()) {
-                bottom.setSelectedIndex(0);
+            if (r.ok()) {
+                bottom.setSelectedIndex(1);
+                String time = java.time.LocalTime.now().withNano(0).toString();
+                boolean empty = currentFiles().stream().filter(SourceFile::isJava)
+                        .allMatch(f -> Checker.stripComments(f.text()).isBlank());
+                appendConsole("✓ Kompiliert ohne Fehler (" + time + ")"
+                        + (empty ? " – aber es steht noch kein Code in den Dateien, nur Kommentare.\n" : "\n"), Theme.ok);
             }
             JavaRunner.deleteQuietly(r.classDir());
         });
@@ -473,37 +491,40 @@ public class WorkspacePanel extends JPanel {
             String cls = main != null ? main : preview != null ? "VorschauStarter" : null;
             if (cls == null) {
                 status.setText("Kompiliert. Es gibt keine main-Methode und kein Fenster zum Anzeigen. Nutze ✓ Prüfen.");
-                status.setForeground(new Color(0x8a5a00));
+                bottom.setSelectedIndex(1);
+                appendConsole("Kompiliert ohne Fehler, aber es gibt nichts zu starten: keine Klasse mit main und kein JFrame/JPanel.\n"
+                        + "Für diese Aufgabe reicht ✓ Prüfen. Zum Ausprobieren schreib eine main-Methode oder nutze die Spielwiese.\n", Theme.warn);
+                status.setForeground(Theme.warn);
                 JavaRunner.deleteQuietly(r.classDir());
                 return;
             }
             clearConsole();
             bottom.setSelectedIndex(1);
-            appendConsole(main != null ? "▶ Starte " + cls + " …\n" : "▶ Vorschau von " + preview + " (es gibt kein main) …\n", Color.GRAY);
+            appendConsole(main != null ? "▶ Starte " + cls + " …\n" : "▶ Vorschau von " + preview + " (es gibt kein main) …\n", Theme.muted);
             try {
                 Path dir = r.classDir();
                 running = JavaRunner.run(dir, cls, argsField.getText(),
                         line -> SwingUtilities.invokeLater(() -> appendConsole(line + "\n", null)),
-                        line -> SwingUtilities.invokeLater(() -> appendConsole(line + "\n", new Color(0xc62828))),
+                        line -> SwingUtilities.invokeLater(() -> appendConsole(line + "\n", Theme.err)),
                         () -> SwingUtilities.invokeLater(() -> programEnded(dir)));
                 runButton.setEnabled(false);
                 stopButton.setEnabled(true);
                 status.setText("Programm läuft. Schließe das Fenster oder drücke Stopp.");
-                status.setForeground(new Color(0x1565c0));
+                status.setForeground(Theme.accent);
             } catch (IOException ex) {
-                appendConsole("Konnte das Programm nicht starten: " + ex.getMessage() + "\n", Color.RED);
+                appendConsole("Konnte das Programm nicht starten: " + ex.getMessage() + "\n", Theme.err);
             }
         });
     }
 
     private void programEnded(Path dir) {
         int code = running == null ? 0 : safeExit(running);
-        appendConsole("■ Programm beendet (Exit-Code " + code + ")\n", Color.GRAY);
+        appendConsole("■ Programm beendet (Exit-Code " + code + ")\n", Theme.muted);
         running = null;
         runButton.setEnabled(true);
         stopButton.setEnabled(false);
         status.setText("Programm beendet.");
-        status.setForeground(Color.DARK_GRAY);
+        status.setForeground(Theme.muted);
         JavaRunner.deleteQuietly(dir);
     }
 
@@ -568,17 +589,17 @@ public class WorkspacePanel extends JPanel {
         onProgress.run();
         if (!compiled) {
             status.setText("Erst die Compiler-Fehler beheben, dann zählt die Aufgabe. Anforderungen siehe links.");
-            status.setForeground(new Color(0xc62828));
+            status.setForeground(Theme.err);
         } else if (ws.exam()) {
             status.setText("Punkte (geschätzt nach Bausteinen): " + points + " von " + max + ". Erledigte Teilaufgaben: " + groupsDone + "/" + ws.groups().size());
-            status.setForeground(allDone ? new Color(0x2e7d32) : new Color(0x8a5a00));
+            status.setForeground(allDone ? Theme.ok : Theme.warn);
         } else if (allDone) {
             status.setText("Geschafft! Kompiliert und alle Anforderungen erfüllt.");
-            status.setForeground(new Color(0x2e7d32));
+            status.setForeground(Theme.ok);
         } else {
             long missing = lastResults.values().stream().filter(b -> !b).count();
             status.setText("Kompiliert, aber " + missing + " Anforderung(en) fehlen noch. Siehe links.");
-            status.setForeground(new Color(0x8a5a00));
+            status.setForeground(Theme.warn);
         }
     }
 
@@ -643,8 +664,8 @@ public class WorkspacePanel extends JPanel {
             }
         }
         if (!ws.playground()) {
-            h.append("<hr><p class='muted'><b>So gehst du vor:</b> Code schreiben → <b>Kompilieren</b> (Strg+B) → Fehler anklicken und beheben → "
-                    + "<b>▶ Ausführen</b> (F5) zum Ausprobieren → <b>✓ Prüfen</b> (Strg+Enter).</p>");
+            h.append("<hr><p class='muted'><b>So gehst du vor:</b> Code schreiben → <b>Kompilieren</b> (" + Keys.COMPILE + ") → Fehler anklicken und beheben → "
+                    + "<b>▶ Ausführen</b> (" + Keys.RUN + ") zum Ausprobieren → <b>✓ Prüfen</b> (" + Keys.CHECK + ").</p>");
         }
         int caret = description.getCaretPosition();
         description.setText(Html.page(h.toString()));
@@ -763,7 +784,7 @@ public class WorkspacePanel extends JPanel {
     private void updateClock() {
         int s = Math.max(0, secondsLeft);
         clock.setText((clockTimer.isRunning() ? "⏱ " : "⏸ ") + String.format("%02d:%02d", s / 60, s % 60));
-        clock.setForeground(s < 10 * 60 ? new Color(0xc62828) : Color.DARK_GRAY);
+        clock.setForeground(s < 10 * 60 ? Theme.err : Theme.fg);
     }
 
     /* ------------------------------------------------------------ Helfer */
@@ -794,7 +815,7 @@ public class WorkspacePanel extends JPanel {
                     + Html.esc(p.file()) + ":" + p.line() + " &nbsp;<code>" + msg + "</code>"
                     + (detail.isEmpty() ? "" : " <font color='#777'>" + detail.replace("\n", " · ") + "</font>")
                     + (p.hint().isEmpty() ? "" : "<br><font color='#1a5fb4'>→ " + Html.esc(p.hint()) + "</font>") + "</html>";
-            JLabel l = (JLabel) super.getListCellRendererComponent(list, html, index, sel, focus);
+            JLabel l = (JLabel) super.getListCellRendererComponent(list, Theme.html(html), index, sel, focus);
             l.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
             return l;
         }

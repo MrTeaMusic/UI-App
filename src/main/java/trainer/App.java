@@ -3,10 +3,10 @@ package trainer;
 import trainer.compiler.JavaRunner;
 import trainer.content.Content;
 import trainer.ui.MainWindow;
+import trainer.ui.Theme;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 
 /** Startpunkt des Swing-Klausurtrainers. In IntelliJ: Rechtsklick auf diese Datei → Run 'App.main()'. */
 public final class App {
@@ -16,11 +16,8 @@ public final class App {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception ignored) {
-                // dann eben das Standard-Aussehen
-            }
+            Progress progress = new Progress();
+            Theme.apply(Boolean.parseBoolean(progress.get("dark", "true")));
             if (!JavaRunner.compilerAvailable()) {
                 JOptionPane.showMessageDialog(null,
                         "Es wurde kein Java-Compiler gefunden.\n\n"
@@ -28,7 +25,7 @@ public final class App {
                                 + "In IntelliJ: File → Project Structure → SDK → ein JDK 17 oder neuer auswählen.",
                         "JDK fehlt", JOptionPane.ERROR_MESSAGE);
             }
-            MainWindow w = new MainWindow(Content.load(), new Progress());
+            MainWindow w = new MainWindow(Content.load(), progress);
             w.setVisible(true);
         });
     }

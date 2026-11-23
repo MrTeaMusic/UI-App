@@ -4,6 +4,7 @@ import trainer.Progress;
 import trainer.content.Content;
 
 import javax.swing.BorderFactory;
+import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -42,6 +43,7 @@ public class MainWindow extends JFrame {
     private final JTree tree = new JTree(treeModel);
     private final JPanel right = new JPanel(new BorderLayout());
     private final Map<String, WorkspacePanel> workspaces = new HashMap<>();
+    private String currentKey = "home";
 
     /** Was ein Knoten im Baum darstellt. */
     private record Item(String kind, String label, Object data) {
@@ -59,10 +61,7 @@ public class MainWindow extends JFrame {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                for (WorkspacePanel w : workspaces.values()) {
-                    w.saveNow();
-                    w.stopProgram();
-                }
+                shutdownWorkspaces();
                 dispose();
                 System.exit(0);
             }
@@ -70,10 +69,11 @@ public class MainWindow extends JFrame {
         buildTree();
         tree.setRootVisible(false);
         tree.setShowsRootHandles(true);
-        tree.setRowHeight(24);
+        tree.setRowHeight(28);
+        tree.setBackground(Theme.panel);
         tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         tree.setCellRenderer(new Renderer());
-        tree.setBorder(BorderFactory.createEmptyBorder(6, 4, 6, 4));
+        tree.setBorder(BorderFactory.createEmptyBorder(4, 8, 8, 8));
         tree.addTreeSelectionListener(e -> {
             Object n = tree.getLastSelectedPathComponent();
             if (n instanceof DefaultMutableTreeNode node && node.getUserObject() instanceof Item item) {
@@ -81,8 +81,17 @@ public class MainWindow extends JFrame {
             }
         });
         JScrollPane treeScroll = new JScrollPane(tree);
-        treeScroll.setMinimumSize(new Dimension(200, 100));
-        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, treeScroll, right);
+        treeScroll.setBorder(BorderFactory.createEmptyBorder());
+        treeScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        JPanel side = new JPanel(new BorderLayout());
+        side.setBackground(Theme.panel);
+        side.setMinimumSize(new Dimension(220, 100));
+        side.add(sidebarHeader(), BorderLayout.NORTH);
+        side.add(treeScroll, BorderLayout.CENTER);
+        side.add(sidebarFooter(), BorderLayout.SOUTH);
+        right.setBackground(Theme.bg);
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, side, right);
+        split.setBorder(BorderFactory.createEmptyBorder());
         split.setDividerLocation(340);
         add(split);
         setSize(1400, 880);
@@ -90,10 +99,76 @@ public class MainWindow extends JFrame {
         tree.setSelectionRow(0);
     }
 
+    /** Kopf der Seitenleiste: Name und Countdown bis zur Klausur. */
+    private JComponent sidebarHeader() {
+        JPanel p = new JPanel();
+        p.setLayout(new javax.swing.BoxLayout(p, javax.swing.BoxLayout.Y_AXIS));
+        p.setBackground(Theme.panel);
+        p.setBorder(BorderFactory.createEmptyBorder(16, 18, 10, 18));
+        JLabel title = new JLabel("Swing-Klausurtrainer");
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 17f));
+        title.setForeground(Theme.fg);
+        long days = ChronoUnit.DAYS.between(LocalDate.now(), EXAM_DATE);
+        JLabel sub = new JLabel(days > 0 ? "Noch " + days + " Tage bis zur Klausur" : days == 0 ? "Heute ist Klausur – viel Erfolg!" : "User Interaction");
+        sub.setForeground(Theme.accent);
+        sub.setFont(sub.getFont().deriveFont(Font.BOLD, 12f));
+        sub.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
+        p.add(title);
+        p.add(sub);
+        return p;
+    }
+
+    /** Fuß der Seitenleiste: Umschalter für Hell und Dunkel. */
+    private JComponent sidebarFooter() {
+        JPanel p = new JPanel(new BorderLayout());
+        p.setBackground(Theme.panel);
+        p.setBorder(BorderFactory.createEmptyBorder(8, 14, 12, 14));
+        javax.swing.JButton toggle = new javax.swing.JButton(Theme.dark ? "☀  Helles Design" : "☾  Dunkles Design");
+        toggle.setFocusable(false);
+        toggle.addActionListener(e -> switchTheme());
+        p.add(toggle, BorderLayout.CENTER);
+        return p;
+    }
+
+    /** Wechselt das Design. Das Fenster wird neu aufgebaut, dein Code ist vorher gespeichert. */
+    private void switchTheme() {
+        shutdownWorkspaces();
+        boolean dark = !Theme.dark;
+        progress.put("dark", String.valueOf(dark));
+        Theme.apply(dark);
+        MainWindow w = new MainWindow(content, progress);
+        w.setBounds(getBounds());
+        w.setExtendedState(getExtendedState());
+        w.select(currentKey);
+        dispose();
+        w.setVisible(true);
+    }
+
+    private void shutdownWorkspaces() {
+        for (WorkspacePanel w : workspaces.values()) {
+            w.saveNow();
+            w.stopProgram();
+        }
+    }
+
+    private static String keyOf(Item it) {
+        if (it.data() instanceof Content.Task t) {
+            return t.id();
+        }
+        if (it.data() instanceof Content.Exam ex) {
+            return ex.id();
+        }
+        if (it.data() instanceof Content.Module m && it.kind().equals("lesson")) {
+            return m.id();
+        }
+        return it.kind();
+    }
+
     private void buildTree() {
         root.add(new DefaultMutableTreeNode(new Item("home", "Start und Fortschritt", null)));
         root.add(new DefaultMutableTreeNode(new Item("play", "Spielwiese (freies Üben)", null)));
         DefaultMutableTreeNode learn = new DefaultMutableTreeNode(new Item("folder", "Lernpfad", null));
+        java.util.List<DefaultMutableTreeNode> modules = new java.util.ArrayList<>();
         int i = 0;
         for (Content.Module m : content.modules()) {
             DefaultMutableTreeNode mn = new DefaultMutableTreeNode(new Item("module", i++ + " · " + m.title(), m));
@@ -102,6 +177,7 @@ public class MainWindow extends JFrame {
                 mn.add(new DefaultMutableTreeNode(new Item("task", t.title(), t)));
             }
             learn.add(mn);
+            modules.add(mn);
         }
         root.add(learn);
         DefaultMutableTreeNode exams = new DefaultMutableTreeNode(new Item("folder", "Altklausuren (100 Minuten)", null));
@@ -112,9 +188,14 @@ public class MainWindow extends JFrame {
         treeModel.reload();
         tree.expandPath(new TreePath(learn.getPath()));
         tree.expandPath(new TreePath(exams.getPath()));
+        // Kapitel aufklappen, damit die Code-Aufgaben sofort sichtbar sind
+        for (DefaultMutableTreeNode mn : modules) {
+            tree.expandPath(new TreePath(mn.getPath()));
+        }
     }
 
     private void open(Item item) {
+        currentKey = keyOf(item);
         Component view = switch (item.kind()) {
             case "home" -> htmlView(homeHtml());
             case "play" -> workspace(Workspace.createPlayground());
@@ -145,8 +226,14 @@ public class MainWindow extends JFrame {
         p.setText(Html.page(html));
         p.setCaretPosition(0);
         p.addHyperlinkListener(e -> {
-            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && e.getDescription().startsWith("open:")) {
+            if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED || e.getDescription() == null) {
+                return;
+            }
+            if (e.getDescription().startsWith("open:")) {
                 select(e.getDescription().substring(5));
+            } else if (e.getDescription().startsWith("code:")) {
+                showCode(new String(java.util.Base64.getUrlDecoder().decode(e.getDescription().substring(5)),
+                        java.nio.charset.StandardCharsets.UTF_8));
             }
         });
         JScrollPane s = new JScrollPane(p);
@@ -155,19 +242,30 @@ public class MainWindow extends JFrame {
         return s;
     }
 
+    /** Zeigt die Lösung eines Lückentexts in einem eigenen Fenster. */
+    private void showCode(String code) {
+        javax.swing.JDialog d = new javax.swing.JDialog(this, "Lösung");
+        d.add(new CodeEditor(code, false, true));
+        d.setSize(760, 520);
+        d.setLocationRelativeTo(this);
+        d.setVisible(true);
+    }
+
     /** Wählt einen Baumknoten nach Art bzw. Id aus (für Links auf der Startseite). */
-    private void select(String key) {
+    void select(String key) {
         Enumeration<?> en = root.depthFirstEnumeration();
         while (en.hasMoreElements()) {
             DefaultMutableTreeNode n = (DefaultMutableTreeNode) en.nextElement();
             if (n.getUserObject() instanceof Item it) {
-                String id = it.data() instanceof Content.Task t ? t.id()
-                        : it.data() instanceof Content.Exam ex ? ex.id()
-                        : it.data() instanceof Content.Module m && it.kind().equals("lesson") ? m.id() : it.kind();
+                String id = keyOf(it);
                 if (id.equals(key)) {
                     TreePath p = new TreePath(n.getPath());
                     tree.setSelectionPath(p);
-                    tree.scrollPathToVisible(p);
+                    java.awt.Rectangle r = tree.getPathBounds(p);
+                    if (r != null) {
+                        // nur senkrecht scrollen, sonst verschwindet die Einrückung links
+                        tree.scrollRectToVisible(new java.awt.Rectangle(0, r.y, 1, r.height));
+                    }
                     return;
                 }
             }
@@ -209,10 +307,10 @@ public class MainWindow extends JFrame {
                 + "<ol>"
                 + "<li><b>Erklärung lesen:</b> Jedes Kapitel links beginnt mit einer Erklärung mit Beispielen.</li>"
                 + "<li><b>Code schreiben:</b> Unter jedem Kapitel liegen Aufgaben. Du schreibst echten Java-Code im Editor.</li>"
-                + "<li><b>Kompilieren</b> (Strg+B): Der echte Java-Compiler prüft deinen Code. Fehler werden rot markiert und auf Deutsch erklärt.</li>"
-                + "<li><b>▶ Ausführen</b> (F5): Dein Programm startet, Swing-Fenster öffnen sich wirklich. "
+                + "<li><b>Kompilieren</b> (" + Keys.COMPILE + "): Der echte Java-Compiler prüft deinen Code. Fehler werden rot markiert und auf Deutsch erklärt.</li>"
+                + "<li><b>▶ Ausführen</b> (" + Keys.RUN + "): Dein Programm startet, Swing-Fenster öffnen sich wirklich. "
                 + "Hat eine Klasse kein main, zeigt der Trainer ein Fenster oder Panel als Vorschau.</li>"
-                + "<li><b>✓ Prüfen</b> (Strg+Enter): Kompiliert und prüft, ob alle geforderten Bausteine da sind. Dann gibt es den Haken.</li>"
+                + "<li><b>✓ Prüfen</b> (" + Keys.CHECK + "): Kompiliert und prüft, ob alle geforderten Bausteine da sind. Dann gibt es den Haken.</li>"
                 + "</ol>"
                 + "<p>Dein Code wird automatisch gespeichert (im Benutzerordner unter <code>.swing-klausurtrainer</code>).</p>"
                 + "<h2>Lernpfad</h2>"
@@ -246,7 +344,7 @@ public class MainWindow extends JFrame {
                     boolean d = progress.isDone(((Content.Task) it.data()).id());
                     l.setText((d ? "✓ " : "○ ") + it.label());
                     if (!sel) {
-                        l.setForeground(d ? new Color(0x2e7d32) : Color.DARK_GRAY);
+                        l.setForeground(d ? Theme.ok : Theme.fg);
                     }
                 }
                 case "module" -> {
