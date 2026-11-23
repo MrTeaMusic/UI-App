@@ -37,6 +37,8 @@ Auf dem Mac gilt ⌘ statt Strg: ⌘B kompiliert, ⌘R führt aus, ⌘↩ prüft
 
 Weitere Kürzel im Editor: Tab rückt ein, Shift+Tab rückt aus, Strg+/ kommentiert aus, Strg+Z macht rückgängig.
 
+**Autovervollständigung:** Wie in IntelliJ erscheinen beim Tippen Vorschläge, nach einem Punkt (`model.`, `JOptionPane.`) oder nach zwei Buchstaben (`setT…`). Mit ↑ ↓ wählst du, Enter oder Tab übernimmt, Esc schließt. Strg+Leertaste öffnet die Liste jederzeit (auf dem Mac ist Ctrl+Leertaste oft für die Eingabequelle belegt, dann einfach weitertippen). Vorgeschlagen werden Methoden und Konstanten der Swing- und Java-Klassen, deine eigenen Klassen und Variablen sowie Abkürzungen wie `sout` (System.out.println), `psvm` (main-Methode) und `fori` (for-Schleife). Was in den Musterlösungen vorkommt, steht weiter oben.
+
 **Auto-Imports:** Standardmäßig ergänzt der Trainer unsichtbar `javax.swing.*`, `java.awt.*`, `java.awt.event.*`,
 `java.beans.*` und `java.util.*` (in IntelliJ macht das sonst Alt+Enter). Schalte den Haken aus, wenn du Imports selbst üben willst.
 
@@ -84,6 +86,8 @@ Die App ist selbst eine Swing-Anwendung, du kannst also auch ihren Code als Beis
 | `trainer/ui/WorkspacePanel.java` | Arbeitsbereich: Aufgabe, Editor-Tabs, Probleme, Konsole |
 | `trainer/ui/Theme.java` | Farben, Schriften, Hell/Dunkel |
 | `trainer/ui/CodeEditor.java` | Editor mit Zeilennummern, Farben und Fehlermarkierung |
+| `trainer/ui/CompletionPopup.java` | Vorschlagsliste im Editor (Tasten, Einfügen) |
+| `trainer/complete/Completion.java` | Sucht die Vorschläge: JDK-Klassen per Reflection, eigene Klassen, Variablen, Snippets |
 | `trainer/compiler/JavaRunner.java` | Kompilieren mit `javax.tools.JavaCompiler` und Starten in einer eigenen JVM |
 | `trainer/compiler/ErrorHelp.java` | Deutsche Erklärungen für typische Compiler-Fehler |
 | `trainer/check/Checker.java` | Prüft die geforderten Bausteine |

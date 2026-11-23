@@ -121,6 +121,13 @@ public class CodeEditor extends JScrollPane {
         installKeys();
     }
 
+    /** Schaltet die Autovervollständigung ein. files liefert den Code aller Dateien der Aufgabe. */
+    public void enableCompletion(java.util.function.Supplier<java.util.List<String>> files) {
+        if (text.isEditable()) {
+            new CompletionPopup(text, files);
+        }
+    }
+
     public JTextPane textPane() {
         return text;
     }

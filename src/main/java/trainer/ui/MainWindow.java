@@ -53,9 +53,25 @@ public class MainWindow extends JFrame {
         }
     }
 
+    /** Alle Namen aus den Musterlösungen: Das sind die Methoden und Klassen, die in der Klausur gebraucht werden. */
+    private static java.util.Set<String> wordsOf(Content c) {
+        java.util.Set<String> words = new java.util.HashSet<>();
+        java.util.regex.Pattern word = java.util.regex.Pattern.compile("[A-Za-z_]\\w+");
+        java.util.function.Consumer<String> add = s -> {
+            java.util.regex.Matcher m = word.matcher(s);
+            while (m.find()) {
+                words.add(m.group());
+            }
+        };
+        c.modules().forEach(m -> m.tasks().forEach(t -> t.solution().forEach(f -> add.accept(f.text()))));
+        c.exams().forEach(e -> e.solution().forEach(f -> add.accept(f.text())));
+        return words;
+    }
+
     public MainWindow(Content content, Progress progress) {
         this.content = content;
         this.progress = progress;
+        trainer.complete.Completion.setPreferred(wordsOf(content));
         setTitle("Swing-Klausurtrainer – User Interaction");
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
