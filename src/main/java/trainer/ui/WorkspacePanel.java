@@ -256,6 +256,9 @@ public class WorkspacePanel extends JPanel {
 
     private void addEditor(String name, String text, boolean editable) {
         CodeEditor ed = new CodeEditor(text, editable, name.endsWith(".java"));
+        if (editable && name.endsWith(".java")) {
+            ed.enableCompletion(() -> currentFiles().stream().filter(SourceFile::isJava).map(SourceFile::text).toList());
+        }
         editors.put(name, ed);
         tabs.addTab(editable ? name : name + " (gegeben)", ed);
         if (!editable) {
