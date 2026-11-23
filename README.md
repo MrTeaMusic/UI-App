@@ -12,7 +12,7 @@ startet dein Programm (Swing-Fenster öffnen sich wirklich) und prüft, ob alle 
 3. Oben rechts die Run-Konfiguration **Klausurtrainer** wählen und auf den grünen Pfeil klicken.
    (Alternativ: `src/main/java/trainer/App.java` öffnen → Rechtsklick → *Run 'App.main()'*.)
 
-Ohne IntelliJ: `mvn package` und dann `java -jar target/swing-klausurtrainer-1.0.jar`.
+Ohne IntelliJ: `mvn package` und dann `java -jar target/swing-klausurtrainer-1.0.jar` (das JAR enthält alles).
 
 ## Was drin ist
 
@@ -39,6 +39,8 @@ Weitere Kürzel im Editor: Tab rückt ein, Shift+Tab rückt aus, Strg+/ kommenti
 
 **Auto-Imports:** Standardmäßig ergänzt der Trainer unsichtbar `javax.swing.*`, `java.awt.*`, `java.awt.event.*`,
 `java.beans.*` und `java.util.*` (in IntelliJ macht das sonst Alt+Enter). Schalte den Haken aus, wenn du Imports selbst üben willst.
+
+**Design:** Modernes Aussehen mit FlatLaf, Schriften Inter und JetBrains Mono. Unten links in der Seitenleiste schaltest du zwischen hellem und dunklem Design um (Standard: dunkel). IntelliJ lädt FlatLaf beim ersten Öffnen automatisch über Maven.
 
 **Speichern:** Dein Code und dein Fortschritt werden automatisch im Benutzerordner unter `.swing-klausurtrainer` gespeichert.
 
@@ -80,6 +82,7 @@ Die App ist selbst eine Swing-Anwendung, du kannst also auch ihren Code als Beis
 | `trainer/App.java` | Startpunkt (`main`) |
 | `trainer/ui/MainWindow.java` | Hauptfenster mit Baum links (`JTree`, `JSplitPane`) |
 | `trainer/ui/WorkspacePanel.java` | Arbeitsbereich: Aufgabe, Editor-Tabs, Probleme, Konsole |
+| `trainer/ui/Theme.java` | Farben, Schriften, Hell/Dunkel |
 | `trainer/ui/CodeEditor.java` | Editor mit Zeilennummern, Farben und Fehlermarkierung |
 | `trainer/compiler/JavaRunner.java` | Kompilieren mit `javax.tools.JavaCompiler` und Starten in einer eigenen JVM |
 | `trainer/compiler/ErrorHelp.java` | Deutsche Erklärungen für typische Compiler-Fehler |

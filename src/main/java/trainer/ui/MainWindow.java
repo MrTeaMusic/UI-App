@@ -4,6 +4,7 @@ import trainer.Progress;
 import trainer.content.Content;
 
 import javax.swing.BorderFactory;
+import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -42,6 +43,7 @@ public class MainWindow extends JFrame {
     private final JTree tree = new JTree(treeModel);
     private final JPanel right = new JPanel(new BorderLayout());
     private final Map<String, WorkspacePanel> workspaces = new HashMap<>();
+    private String currentKey = "home";
 
     /** Was ein Knoten im Baum darstellt. */
     private record Item(String kind, String label, Object data) {
@@ -59,10 +61,7 @@ public class MainWindow extends JFrame {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                for (WorkspacePanel w : workspaces.values()) {
-                    w.saveNow();
-                    w.stopProgram();
-                }
+                shutdownWorkspaces();
                 dispose();
                 System.exit(0);
             }
@@ -70,10 +69,11 @@ public class MainWindow extends JFrame {
         buildTree();
         tree.setRootVisible(false);
         tree.setShowsRootHandles(true);
-        tree.setRowHeight(24);
+        tree.setRowHeight(28);
+        tree.setBackground(Theme.panel);
         tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         tree.setCellRenderer(new Renderer());
-        tree.setBorder(BorderFactory.createEmptyBorder(6, 4, 6, 4));
+        tree.setBorder(BorderFactory.createEmptyBorder(4, 8, 8, 8));
         tree.addTreeSelectionListener(e -> {
             Object n = tree.getLastSelectedPathComponent();
             if (n instanceof DefaultMutableTreeNode node && node.getUserObject() instanceof Item item) {
@@ -81,13 +81,87 @@ public class MainWindow extends JFrame {
             }
         });
         JScrollPane treeScroll = new JScrollPane(tree);
-        treeScroll.setMinimumSize(new Dimension(200, 100));
-        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, treeScroll, right);
+        treeScroll.setBorder(BorderFactory.createEmptyBorder());
+        treeScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        JPanel side = new JPanel(new BorderLayout());
+        side.setBackground(Theme.panel);
+        side.setMinimumSize(new Dimension(220, 100));
+        side.add(sidebarHeader(), BorderLayout.NORTH);
+        side.add(treeScroll, BorderLayout.CENTER);
+        side.add(sidebarFooter(), BorderLayout.SOUTH);
+        right.setBackground(Theme.bg);
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, side, right);
+        split.setBorder(BorderFactory.createEmptyBorder());
         split.setDividerLocation(340);
         add(split);
         setSize(1400, 880);
         setLocationRelativeTo(null);
         tree.setSelectionRow(0);
+    }
+
+    /** Kopf der Seitenleiste: Name und Countdown bis zur Klausur. */
+    private JComponent sidebarHeader() {
+        JPanel p = new JPanel();
+        p.setLayout(new javax.swing.BoxLayout(p, javax.swing.BoxLayout.Y_AXIS));
+        p.setBackground(Theme.panel);
+        p.setBorder(BorderFactory.createEmptyBorder(16, 18, 10, 18));
+        JLabel title = new JLabel("Swing-Klausurtrainer");
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 17f));
+        title.setForeground(Theme.fg);
+        long days = ChronoUnit.DAYS.between(LocalDate.now(), EXAM_DATE);
+        JLabel sub = new JLabel(days > 0 ? "Noch " + days + " Tage bis zur Klausur" : days == 0 ? "Heute ist Klausur – viel Erfolg!" : "User Interaction");
+        sub.setForeground(Theme.accent);
+        sub.setFont(sub.getFont().deriveFont(Font.BOLD, 12f));
+        sub.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
+        p.add(title);
+        p.add(sub);
+        return p;
+    }
+
+    /** Fuß der Seitenleiste: Umschalter für Hell und Dunkel. */
+    private JComponent sidebarFooter() {
+        JPanel p = new JPanel(new BorderLayout());
+        p.setBackground(Theme.panel);
+        p.setBorder(BorderFactory.createEmptyBorder(8, 14, 12, 14));
+        javax.swing.JButton toggle = new javax.swing.JButton(Theme.dark ? "☀  Helles Design" : "☾  Dunkles Design");
+        toggle.setFocusable(false);
+        toggle.addActionListener(e -> switchTheme());
+        p.add(toggle, BorderLayout.CENTER);
+        return p;
+    }
+
+    /** Wechselt das Design. Das Fenster wird neu aufgebaut, dein Code ist vorher gespeichert. */
+    private void switchTheme() {
+        shutdownWorkspaces();
+        boolean dark = !Theme.dark;
+        progress.put("dark", String.valueOf(dark));
+        Theme.apply(dark);
+        MainWindow w = new MainWindow(content, progress);
+        w.setBounds(getBounds());
+        w.setExtendedState(getExtendedState());
+        w.select(currentKey);
+        dispose();
+        w.setVisible(true);
+    }
+
+    private void shutdownWorkspaces() {
+        for (WorkspacePanel w : workspaces.values()) {
+            w.saveNow();
+            w.stopProgram();
+        }
+    }
+
+    private static String keyOf(Item it) {
+        if (it.data() instanceof Content.Task t) {
+            return t.id();
+        }
+        if (it.data() instanceof Content.Exam ex) {
+            return ex.id();
+        }
+        if (it.data() instanceof Content.Module m && it.kind().equals("lesson")) {
+            return m.id();
+        }
+        return it.kind();
     }
 
     private void buildTree() {
@@ -121,6 +195,7 @@ public class MainWindow extends JFrame {
     }
 
     private void open(Item item) {
+        currentKey = keyOf(item);
         Component view = switch (item.kind()) {
             case "home" -> htmlView(homeHtml());
             case "play" -> workspace(Workspace.createPlayground());
@@ -177,18 +252,20 @@ public class MainWindow extends JFrame {
     }
 
     /** Wählt einen Baumknoten nach Art bzw. Id aus (für Links auf der Startseite). */
-    private void select(String key) {
+    void select(String key) {
         Enumeration<?> en = root.depthFirstEnumeration();
         while (en.hasMoreElements()) {
             DefaultMutableTreeNode n = (DefaultMutableTreeNode) en.nextElement();
             if (n.getUserObject() instanceof Item it) {
-                String id = it.data() instanceof Content.Task t ? t.id()
-                        : it.data() instanceof Content.Exam ex ? ex.id()
-                        : it.data() instanceof Content.Module m && it.kind().equals("lesson") ? m.id() : it.kind();
+                String id = keyOf(it);
                 if (id.equals(key)) {
                     TreePath p = new TreePath(n.getPath());
                     tree.setSelectionPath(p);
-                    tree.scrollPathToVisible(p);
+                    java.awt.Rectangle r = tree.getPathBounds(p);
+                    if (r != null) {
+                        // nur senkrecht scrollen, sonst verschwindet die Einrückung links
+                        tree.scrollRectToVisible(new java.awt.Rectangle(0, r.y, 1, r.height));
+                    }
                     return;
                 }
             }
@@ -267,7 +344,7 @@ public class MainWindow extends JFrame {
                     boolean d = progress.isDone(((Content.Task) it.data()).id());
                     l.setText((d ? "✓ " : "○ ") + it.label());
                     if (!sel) {
-                        l.setForeground(d ? new Color(0x2e7d32) : Color.DARK_GRAY);
+                        l.setForeground(d ? Theme.ok : Theme.fg);
                     }
                 }
                 case "module" -> {
