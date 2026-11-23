@@ -94,6 +94,7 @@ public class MainWindow extends JFrame {
         root.add(new DefaultMutableTreeNode(new Item("home", "Start und Fortschritt", null)));
         root.add(new DefaultMutableTreeNode(new Item("play", "Spielwiese (freies Üben)", null)));
         DefaultMutableTreeNode learn = new DefaultMutableTreeNode(new Item("folder", "Lernpfad", null));
+        java.util.List<DefaultMutableTreeNode> modules = new java.util.ArrayList<>();
         int i = 0;
         for (Content.Module m : content.modules()) {
             DefaultMutableTreeNode mn = new DefaultMutableTreeNode(new Item("module", i++ + " · " + m.title(), m));
@@ -102,6 +103,7 @@ public class MainWindow extends JFrame {
                 mn.add(new DefaultMutableTreeNode(new Item("task", t.title(), t)));
             }
             learn.add(mn);
+            modules.add(mn);
         }
         root.add(learn);
         DefaultMutableTreeNode exams = new DefaultMutableTreeNode(new Item("folder", "Altklausuren (100 Minuten)", null));
@@ -112,6 +114,10 @@ public class MainWindow extends JFrame {
         treeModel.reload();
         tree.expandPath(new TreePath(learn.getPath()));
         tree.expandPath(new TreePath(exams.getPath()));
+        // Kapitel aufklappen, damit die Code-Aufgaben sofort sichtbar sind
+        for (DefaultMutableTreeNode mn : modules) {
+            tree.expandPath(new TreePath(mn.getPath()));
+        }
     }
 
     private void open(Item item) {
@@ -145,14 +151,29 @@ public class MainWindow extends JFrame {
         p.setText(Html.page(html));
         p.setCaretPosition(0);
         p.addHyperlinkListener(e -> {
-            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && e.getDescription().startsWith("open:")) {
+            if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED || e.getDescription() == null) {
+                return;
+            }
+            if (e.getDescription().startsWith("open:")) {
                 select(e.getDescription().substring(5));
+            } else if (e.getDescription().startsWith("code:")) {
+                showCode(new String(java.util.Base64.getUrlDecoder().decode(e.getDescription().substring(5)),
+                        java.nio.charset.StandardCharsets.UTF_8));
             }
         });
         JScrollPane s = new JScrollPane(p);
         s.setBorder(BorderFactory.createEmptyBorder());
         s.getVerticalScrollBar().setUnitIncrement(16);
         return s;
+    }
+
+    /** Zeigt die Lösung eines Lückentexts in einem eigenen Fenster. */
+    private void showCode(String code) {
+        javax.swing.JDialog d = new javax.swing.JDialog(this, "Lösung");
+        d.add(new CodeEditor(code, false, true));
+        d.setSize(760, 520);
+        d.setLocationRelativeTo(this);
+        d.setVisible(true);
     }
 
     /** Wählt einen Baumknoten nach Art bzw. Id aus (für Links auf der Startseite). */
@@ -209,10 +230,10 @@ public class MainWindow extends JFrame {
                 + "<ol>"
                 + "<li><b>Erklärung lesen:</b> Jedes Kapitel links beginnt mit einer Erklärung mit Beispielen.</li>"
                 + "<li><b>Code schreiben:</b> Unter jedem Kapitel liegen Aufgaben. Du schreibst echten Java-Code im Editor.</li>"
-                + "<li><b>Kompilieren</b> (Strg+B): Der echte Java-Compiler prüft deinen Code. Fehler werden rot markiert und auf Deutsch erklärt.</li>"
-                + "<li><b>▶ Ausführen</b> (F5): Dein Programm startet, Swing-Fenster öffnen sich wirklich. "
+                + "<li><b>Kompilieren</b> (" + Keys.COMPILE + "): Der echte Java-Compiler prüft deinen Code. Fehler werden rot markiert und auf Deutsch erklärt.</li>"
+                + "<li><b>▶ Ausführen</b> (" + Keys.RUN + "): Dein Programm startet, Swing-Fenster öffnen sich wirklich. "
                 + "Hat eine Klasse kein main, zeigt der Trainer ein Fenster oder Panel als Vorschau.</li>"
-                + "<li><b>✓ Prüfen</b> (Strg+Enter): Kompiliert und prüft, ob alle geforderten Bausteine da sind. Dann gibt es den Haken.</li>"
+                + "<li><b>✓ Prüfen</b> (" + Keys.CHECK + "): Kompiliert und prüft, ob alle geforderten Bausteine da sind. Dann gibt es den Haken.</li>"
                 + "</ol>"
                 + "<p>Dein Code wird automatisch gespeichert (im Benutzerordner unter <code>.swing-klausurtrainer</code>).</p>"
                 + "<h2>Lernpfad</h2>"

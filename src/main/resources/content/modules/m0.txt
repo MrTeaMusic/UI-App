@@ -1,7 +1,7 @@
 @@module m0
 @@title Java-Minimum für Einsteiger
 @@lesson
-<h1>Java-Minimum für Einsteiger</h1><p><i>Klassen, Objekte, Vererbung, Interfaces, Typen und Fehler. Nur das, was die Klausur voraussetzt.</i></p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eef4ff"><b>Ziel:</b> Nach diesem Modul kannst du Java-Code lesen und kleine Klassen selbst schreiben. Alles Weitere baut darauf auf.</td></tr></table><br><h2>Klasse, Objekt, Konstruktor</h2><p>Eine <b>Klasse</b> ist ein Bauplan. Ein <b>Objekt</b> ist ein Ding, das nach diesem Bauplan gebaut wurde. Mit <code>new</code> baust du ein Objekt, dabei läuft der <b>Konstruktor</b>.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>class</b></font> Lamp {
+<h1>Java-Minimum für Einsteiger</h1><p><i>Klassen, Objekte, Vererbung, Interfaces, Typen und Fehler. Nur das, was die Klausur voraussetzt.</i></p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eef4ff"><b>Ziel:</b> Nach diesem Modul kannst du Java-Code lesen und kleine Klassen selbst schreiben. Alles Weitere baut darauf auf.</td></tr></table><br><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#fff8e1"><b>Hinweis:</b> Die Beispiele auf dieser Seite sind zum Lesen. <b>Kompilieren und Ausführen</b> kannst du in den Code-Aufgaben am Ende der Seite, links im Baum unter dem Kapitel, oder in der Spielwiese.</td></tr></table><br><h2>Klasse, Objekt, Konstruktor</h2><p>Eine <b>Klasse</b> ist ein Bauplan. Ein <b>Objekt</b> ist ein Ding, das nach diesem Bauplan gebaut wurde. Mit <code>new</code> baust du ein Objekt, dabei läuft der <b>Konstruktor</b>.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>class</b></font> Lamp {
     <font color="#0033b3"><b>private</b></font> <font color="#0033b3"><b>boolean</b></font> on;            <font color="#7a7f87"><i>// Attribut: der Zustand des Objekts</i></font>
 
     <font color="#0033b3"><b>public</b></font> Lamp(<font color="#0033b3"><b>boolean</b></font> on) {      <font color="#7a7f87"><i>// Konstruktor: heißt wie die Klasse, kein Rückgabetyp</i></font>
@@ -21,17 +21,17 @@ System.out.println(lamp.isOn()); <font color="#7a7f87"><i>// true</i></font></pr
     <font color="#0033b3"><b>private</b></font> <font color="#0033b3"><b>int</b></font> count;
 
     <font color="#0033b3"><b>public</b></font> Counter(<font color="#0033b3"><b>int</b></font> start) {
-        /*<font color="#0033b3"><b>this</b></font>.count*/ = start;
+        __1__ = start;
     }
 
     <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>void</b></font> inc() {
-        count/*++*/;
+        count__2__;
     }
 
-    <font color="#0033b3"><b>public</b></font> /*<font color="#0033b3"><b>int</b></font>*/ getCount() {
+    <font color="#0033b3"><b>public</b></font> __3__ getCount() {
         <font color="#0033b3"><b>return</b></font> count;
     }
-}</pre></td></tr></table><p class="cap">Die Kommentare zeigen die Lösung der Lücken. Tipp: erst abdecken, dann selbst überlegen.</p><h2>static, main und der Launcher</h2><p>Normalerweise brauchst du ein Objekt, um eine Methode aufzurufen. <code>static</code> heißt: Die Methode gehört zur <b>Klasse</b>, nicht zu einem Objekt. Genau deshalb kann Java <code>main</code> starten, ohne vorher irgendein Objekt zu haben.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>class</b></font> Launcher {
+}</pre></td></tr></table><p class="cap">Überleg dir, was in die 3 Lücken gehört. <a href="code:cHVibGljIGNsYXNzIENvdW50ZXIgewogICAgcHJpdmF0ZSBpbnQgY291bnQ7CgogICAgcHVibGljIENvdW50ZXIoaW50IHN0YXJ0KSB7CiAgICAgICAgdGhpcy5jb3VudCA9IHN0YXJ0OwogICAgfQoKICAgIHB1YmxpYyB2b2lkIGluYygpIHsKICAgICAgICBjb3VudCsrOwogICAgfQoKICAgIHB1YmxpYyBpbnQgZ2V0Q291bnQoKSB7CiAgICAgICAgcmV0dXJuIGNvdW50OwogICAgfQp9">Lösung anzeigen</a></p><h2>static, main und der Launcher</h2><p>Normalerweise brauchst du ein Objekt, um eine Methode aufzurufen. <code>static</code> heißt: Die Methode gehört zur <b>Klasse</b>, nicht zu einem Objekt. Genau deshalb kann Java <code>main</code> starten, ohne vorher irgendein Objekt zu haben.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>class</b></font> Launcher {
     <font color="#0033b3"><b>public</b></font> <font color="#0033b3"><b>static</b></font> <font color="#0033b3"><b>void</b></font> main(String[] args) {   <font color="#7a7f87"><i>// Einstiegspunkt jedes Java-Programms</i></font>
         Model model = <font color="#0033b3"><b>new</b></font> Model();
         View view = <font color="#0033b3"><b>new</b></font> View();
@@ -87,16 +87,16 @@ String cmd = <font color="#2e7d32">"S"</font>;
         pause();
         <font color="#0033b3"><b>break</b></font>;
 }</pre></td></tr></table><h3>Lückentext: Zahl einlesen und Fehler abfangen</h3><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre><font color="#0033b3"><b>try</b></font> {
-    <font color="#0033b3"><b>int</b></font> v = Integer./*parseInt*/(text);
-} /*<font color="#0033b3"><b>catch</b></font>*/ (/*NumberFormatException*/ e) {
+    <font color="#0033b3"><b>int</b></font> v = Integer.__1__(text);
+} __2__ (__3__ e) {
     System.out.println(<font color="#2e7d32">"Ungültig"</font>);
-}</pre></td></tr></table><p class="cap">Die Kommentare zeigen die Lösung der Lücken. Tipp: erst abdecken, dann selbst überlegen.</p><h3>Lückentext: Fallunterscheidung über einen String</h3><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre>/*<font color="#0033b3"><b>switch</b></font>*/ (cmd) {
-    /*<font color="#0033b3"><b>case</b></font>*/ <font color="#2e7d32">"S"</font>:
+}</pre></td></tr></table><p class="cap">Überleg dir, was in die 3 Lücken gehört. <a href="code:dHJ5IHsKICAgIGludCB2ID0gSW50ZWdlci5wYXJzZUludCh0ZXh0KTsKfSBjYXRjaCAoTnVtYmVyRm9ybWF0RXhjZXB0aW9uIGUpIHsKICAgIFN5c3RlbS5vdXQucHJpbnRsbigiVW5nw7xsdGlnIik7Cn0">Lösung anzeigen</a></p><h3>Lückentext: Fallunterscheidung über einen String</h3><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#f3f4f7"><pre>__1__ (cmd) {
+    __2__ <font color="#2e7d32">"S"</font>:
         start();
-        /*<font color="#0033b3"><b>break</b></font>*/;
-    /*<font color="#0033b3"><b>default</b></font>*/:
+        __3__;
+    __4__:
         <font color="#0033b3"><b>break</b></font>;
-}</pre></td></tr></table><p class="cap">Die Kommentare zeigen die Lösung der Lücken. Tipp: erst abdecken, dann selbst überlegen.</p><h2>Generics in einem Satz</h2><p>Wenn du <code>JComboBox&lt;String&gt;</code> oder <code>List&lt;String&gt;</code> siehst: Die Angabe in den spitzen Klammern legt den Typ fest, den der Behälter enthält. Der Compiler prüft das, statt dass es erst zur Laufzeit knallt (so wäre es mit <code>Object</code>). Beim Anlegen reicht <code>new JComboBox&lt;&gt;(...)</code>.</p><p>Schreib den Code selbst, so wie du ihn in IntelliJ tippen würdest (Imports darfst du weglassen). „Prüfen“ lässt den Mini-Compiler laufen und schaut, ob alle geforderten Bausteine vorkommen. Die Musterlösung erst danach ansehen.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eef4ff"><b>Weiter:</b> Zu diesem Kapitel gibt es 7 Code-Aufgaben. Du findest sie links im Baum unter dem Kapitel.</td></tr></table><br>
+}</pre></td></tr></table><p class="cap">Überleg dir, was in die 4 Lücken gehört. <a href="code:c3dpdGNoIChjbWQpIHsKICAgIGNhc2UgIlMiOgogICAgICAgIHN0YXJ0KCk7CiAgICAgICAgYnJlYWs7CiAgICBkZWZhdWx0OgogICAgICAgIGJyZWFrOwp9">Lösung anzeigen</a></p><h2>Generics in einem Satz</h2><p>Wenn du <code>JComboBox&lt;String&gt;</code> oder <code>List&lt;String&gt;</code> siehst: Die Angabe in den spitzen Klammern legt den Typ fest, den der Behälter enthält. Der Compiler prüft das, statt dass es erst zur Laufzeit knallt (so wäre es mit <code>Object</code>). Beim Anlegen reicht <code>new JComboBox&lt;&gt;(...)</code>.</p><p>Schreib den Code selbst, so wie du ihn in IntelliJ tippen würdest (Imports darfst du weglassen). „Prüfen“ lässt den Mini-Compiler laufen und schaut, ob alle geforderten Bausteine vorkommen. Die Musterlösung erst danach ansehen.</p><table width="100%" cellpadding="8" cellspacing="0"><tr><td bgcolor="#eef4ff"><b>Jetzt selbst programmieren:</b> <ol><li><a href="open:m0-1">Eine Klasse schreiben</a></li><li><a href="open:m0-2">Objekt erzeugen und benutzen</a></li><li><a href="open:m0-3">Vererben und überschreiben</a></li><li><a href="open:m0-4">Interface implementieren</a></li><li><a href="open:m0-5">Schleife und double-Cast</a></li><li><a href="open:m0-6">Text in Zahl umwandeln</a></li><li><a href="open:m0-7">switch über einen String</a></li></ol></td></tr></table><br>
 @@task m0-1
 @@title Eine Klasse schreiben
 @@text

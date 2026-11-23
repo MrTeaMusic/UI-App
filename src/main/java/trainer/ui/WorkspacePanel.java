@@ -153,8 +153,8 @@ public class WorkspacePanel extends JPanel {
         JToolBar tb = new JToolBar();
         tb.setFloatable(false);
         tb.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
-        JButton compile = button("Kompilieren", "Nur übersetzen und Fehler anzeigen (Strg+B)", this::compileOnly);
-        runButton.setToolTipText("Kompilieren und starten (F5)");
+        JButton compile = button("Kompilieren", "Nur übersetzen und Fehler anzeigen (" + Keys.COMPILE + ")", this::compileOnly);
+        runButton.setToolTipText("Kompilieren und starten (" + Keys.RUN + ")");
         runButton.addActionListener(e -> runProgram());
         stopButton.setToolTipText("Laufendes Programm beenden");
         stopButton.setEnabled(false);
@@ -164,7 +164,7 @@ public class WorkspacePanel extends JPanel {
         tb.add(stopButton);
         if (!ws.playground()) {
             tb.addSeparator();
-            JButton check = button("✓ Prüfen", "Kompilieren und Anforderungen prüfen (Strg+Enter)", this::check);
+            JButton check = button("✓ Prüfen", "Kompilieren und Anforderungen prüfen (" + Keys.CHECK + ")", this::check);
             check.setFont(check.getFont().deriveFont(Font.BOLD));
             tb.add(check);
             tb.add(button("Lösung", "Musterlösung ansehen", this::showSolution));
@@ -254,6 +254,7 @@ public class WorkspacePanel extends JPanel {
     private void installShortcuts() {
         int menu = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
         shortcut(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), "run", this::runProgram);
+        shortcut(KeyStroke.getKeyStroke(KeyEvent.VK_R, menu), "run2", this::runProgram);
         shortcut(KeyStroke.getKeyStroke(KeyEvent.VK_B, menu), "compile", this::compileOnly);
         if (!ws.playground()) {
             shortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, menu), "check", this::check);
@@ -450,8 +451,13 @@ public class WorkspacePanel extends JPanel {
 
     private void compileOnly() {
         compile(currentFiles(), r -> {
-            if (r.ok() && problemModel.isEmpty()) {
-                bottom.setSelectedIndex(0);
+            if (r.ok()) {
+                bottom.setSelectedIndex(1);
+                String time = java.time.LocalTime.now().withNano(0).toString();
+                boolean empty = currentFiles().stream().filter(SourceFile::isJava)
+                        .allMatch(f -> Checker.stripComments(f.text()).isBlank());
+                appendConsole("✓ Kompiliert ohne Fehler (" + time + ")"
+                        + (empty ? " – aber es steht noch kein Code in den Dateien, nur Kommentare.\n" : "\n"), new Color(0x2e7d32));
             }
             JavaRunner.deleteQuietly(r.classDir());
         });
@@ -473,6 +479,9 @@ public class WorkspacePanel extends JPanel {
             String cls = main != null ? main : preview != null ? "VorschauStarter" : null;
             if (cls == null) {
                 status.setText("Kompiliert. Es gibt keine main-Methode und kein Fenster zum Anzeigen. Nutze ✓ Prüfen.");
+                bottom.setSelectedIndex(1);
+                appendConsole("Kompiliert ohne Fehler, aber es gibt nichts zu starten: keine Klasse mit main und kein JFrame/JPanel.\n"
+                        + "Für diese Aufgabe reicht ✓ Prüfen. Zum Ausprobieren schreib eine main-Methode oder nutze die Spielwiese.\n", new Color(0x8a5a00));
                 status.setForeground(new Color(0x8a5a00));
                 JavaRunner.deleteQuietly(r.classDir());
                 return;
@@ -643,8 +652,8 @@ public class WorkspacePanel extends JPanel {
             }
         }
         if (!ws.playground()) {
-            h.append("<hr><p class='muted'><b>So gehst du vor:</b> Code schreiben → <b>Kompilieren</b> (Strg+B) → Fehler anklicken und beheben → "
-                    + "<b>▶ Ausführen</b> (F5) zum Ausprobieren → <b>✓ Prüfen</b> (Strg+Enter).</p>");
+            h.append("<hr><p class='muted'><b>So gehst du vor:</b> Code schreiben → <b>Kompilieren</b> (" + Keys.COMPILE + ") → Fehler anklicken und beheben → "
+                    + "<b>▶ Ausführen</b> (" + Keys.RUN + ") zum Ausprobieren → <b>✓ Prüfen</b> (" + Keys.CHECK + ").</p>");
         }
         int caret = description.getCaretPosition();
         description.setText(Html.page(h.toString()));

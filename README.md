@@ -33,6 +33,8 @@ Ohne IntelliJ: `mvn package` und dann `java -jar target/swing-klausurtrainer-1.0
 | **Lösung** | | Zeigt die Musterlösung (erst selbst versuchen!). |
 | **Zurücksetzen** | | Zurück zum Ausgangscode. |
 
+Auf dem Mac gilt ⌘ statt Strg: ⌘B kompiliert, ⌘R führt aus, ⌘↩ prüft.
+
 Weitere Kürzel im Editor: Tab rückt ein, Shift+Tab rückt aus, Strg+/ kommentiert aus, Strg+Z macht rückgängig.
 
 **Auto-Imports:** Standardmäßig ergänzt der Trainer unsichtbar `javax.swing.*`, `java.awt.*`, `java.awt.event.*`,
